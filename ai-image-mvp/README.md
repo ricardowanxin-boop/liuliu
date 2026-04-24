@@ -7,6 +7,7 @@
 - 批量上传多张图片并逐张处理
 - 自定义提示词进行图像编辑
 - 支持 OpenAI-compatible / DeepRouter、字节 Doubao Seedream / Ark、ZenMux / Vertex AI 三提供商切换
+- Doubao Ark 原生预置 `doubao-seedream-5-0-260128` 与 `doubao-seedream-4-5-251128`
 - ZenMux 预置 `openai/gpt-image-2` 与 `bytedance/doubao-seedream-5.0-lite`
 - 支持结果预览、单张下载、批量 ZIP 下载
 - 支持通过环境变量或 Streamlit secrets 注入 API Key
@@ -116,7 +117,14 @@ export OPENAI_IMAGE_MODEL="gpt-image-1"
 export ARK_API_KEY="your_ark_api_key_here"
 export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 export DOUBAO_MODEL="doubao-seedream-5-0-260128"
-export DOUBAO_IMAGE_SIZE="2048x2048"
+export DOUBAO_IMAGE_SIZE="2K"
+```
+
+也可以切换到 Ark 原生 Seedream 4.5：
+
+```bash
+export DOUBAO_MODEL="doubao-seedream-4-5-251128"
+export DOUBAO_IMAGE_SIZE="2K"
 ```
 
 如果你使用 ZenMux 调用 `gpt-image-2` 或 `doubao-seedream-5.0-lite`，可配置：
@@ -216,8 +224,8 @@ Doubao Seedream 示例：
 [doubao_provider]
 api_key = "your_ark_api_key_here"
 base_url = "https://ark.cn-beijing.volces.com/api/v3"
-model = "doubao-seedream-5-0-260128"
-size = "2048x2048"
+model = "doubao-seedream-4-5-251128"
+size = "2K"
 ```
 
 ZenMux 示例：
@@ -250,8 +258,10 @@ model = "google/gemini-2.5-pro"
 - `Doubao Seedream`
   - 默认 `Base URL`：`https://ark.cn-beijing.volces.com/api/v3`
   - 默认 `Model`：`doubao-seedream-5-0-260128`
+  - 原生 Ark 模型下拉预置：`doubao-seedream-5-0-260128`、`doubao-seedream-4-5-251128`
   - `API Key`：建议使用 `ARK_API_KEY`
   - Doubao 请求默认会关闭接口侧 `watermark`
+  - Seedream 4.5 预置会按 Ark 示例使用 `response_format=url`，并发送 `sequential_image_generation=disabled` 与 `stream=false`
 - `ZenMux / Vertex AI`
   - 默认 `Base URL`：`https://zenmux.ai/api/vertex-ai`
   - 默认 `Model`：`openai/gpt-image-2`
@@ -282,12 +292,12 @@ genai.Client(
 
 ## Doubao 接入说明
 
-如果你要接 `doubao-seedream-5-0-260128`，建议准备这几项：
+如果你要接 `doubao-seedream-5-0-260128` 或 `doubao-seedream-4-5-251128`，建议准备这几项：
 
 1. 火山引擎账号，并开通火山方舟对应的图片生成能力。
 2. 一个可调用 Ark 图像生成 API 的 `ARK_API_KEY`。
 3. 对应地域的 Base URL。北京地域常见值是 `https://ark.cn-beijing.volces.com/api/v3`。
-4. 在 Ark Console 中激活你要用的模型服务，例如 `doubao-seedream-5-0-260128`。如果没有激活，接口通常会返回 “has not activated the model ...”。
+4. 在 Ark Console 中激活你要用的模型服务，例如 `doubao-seedream-5-0-260128` 或 `doubao-seedream-4-5-251128`。如果没有激活，接口通常会返回 “has not activated the model ...”。
 
 官方文档参考：
 - [火山引擎图片生成 API](https://www.volcengine.com/docs/6492/2172373?lang=zh)

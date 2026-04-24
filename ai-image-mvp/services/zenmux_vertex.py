@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import io
+import base64
 from dataclasses import dataclass
+from typing import Any
 
+import requests
 from google import genai
 from google.genai import types
 from PIL import Image, UnidentifiedImageError
@@ -150,12 +153,36 @@ class ZenMuxVertexProvider(BaseImageProvider):
         if not generated_images:
             raise ImageProviderError("ZenMux 服务返回成功，但未包含图像结果。")
 
-        first_image = getattr(generated_images[0], "image", None)
-        raw_bytes = getattr(first_image, "image_bytes", None)
-        if not raw_bytes:
-            raise ImageProviderError("ZenMux 服务返回的图像结果为空。")
+        empty_reasons: list[str] = []
+        for item in generated_images:
+            filtered_reason = getattr(item, "rai_filtered_reason", None)
+            if filtered_reason:
+                empty_reasons.append(f"过滤原因：{filtered_reason}")
 
-        return self._load_image_from_bytes(raw_bytes)
+            image = getattr(item, "image", None)
+            if image is None:
+                continue
+
+            raw_bytes = self._coerce_image_bytes(getattr(image, "image_bytes", None))
+            if raw_bytes:
+                return self._load_image_from_bytes(raw_bytes)
+
+            gcs_uri = str(getattr(image, "gcs_uri", "") or "").strip()
+            if gcs_uri:
+                if gcs_uri.startswith(("http://", "https://")):
+                    return self._download_image(gcs_uri)
+                empty_reasons.append(f"服务返回了不可直接下载的图片 URI：{gcs_uri}")
+
+            safety_reason = self._summarize_safety_attributes(
+                getattr(item, "safety_attributes", None)
+            )
+            if safety_reason:
+                empty_reasons.append(safety_reason)
+
+        detail = "；".join(dict.fromkeys(empty_reasons))
+        if detail:
+            raise ImageProviderError(f"ZenMux 服务返回的图像结果为空：{detail}。")
+        raise ImageProviderError("ZenMux 服务返回的图像结果为空，建议重试或切换模型。")
 
     def _extract_gemini_response_image(self, response: object) -> Image.Image:
         candidates = getattr(response, "candidates", None) or []
@@ -184,8 +211,9 @@ class ZenMuxVertexProvider(BaseImageProvider):
                 or ""
             )
             raw_bytes = getattr(inline_data, "data", None)
-            if raw_bytes and str(mime_type).startswith("image/"):
-                return self._load_image_from_bytes(raw_bytes)
+            normalized_bytes = self._coerce_image_bytes(raw_bytes)
+            if normalized_bytes and str(mime_type).startswith("image/"):
+                return self._load_image_from_bytes(normalized_bytes)
         return None
 
     def _resolved_api_mode(self) -> str:
@@ -194,6 +222,60 @@ class ZenMuxVertexProvider(BaseImageProvider):
         if self.model.startswith("google/gemini") or self.model.startswith("inclusionai/"):
             return "gemini"
         return "imagen"
+
+    def _coerce_image_bytes(self, raw_value: object) -> bytes:
+        if isinstance(raw_value, bytes):
+            return raw_value
+        if isinstance(raw_value, bytearray):
+            return bytes(raw_value)
+        if isinstance(raw_value, str):
+            encoded = raw_value.strip()
+            if not encoded:
+                return b""
+            if encoded.startswith("data:") and "," in encoded:
+                encoded = encoded.split(",", 1)[1].strip()
+            try:
+                return base64.b64decode(encoded, validate=False)
+            except (ValueError, TypeError) as exc:
+                raise ImageProviderError("ZenMux 返回的 base64 图片数据无效。") from exc
+        return b""
+
+    def _download_image(self, image_url: str) -> Image.Image:
+        try:
+            response = requests.get(image_url, timeout=self.timeout)
+            response.raise_for_status()
+        except requests.Timeout as exc:
+            raise ImageProviderError("下载 ZenMux 生成图片超时，请稍后重试。") from exc
+        except requests.RequestException as exc:
+            raise ImageProviderError(f"下载 ZenMux 生成图片失败：{exc}") from exc
+
+        return self._load_image_from_bytes(response.content)
+
+    def _summarize_safety_attributes(self, safety_attributes: object) -> str:
+        if safety_attributes is None:
+            return ""
+
+        payload: dict[str, Any]
+        if hasattr(safety_attributes, "model_dump"):
+            payload = safety_attributes.model_dump(exclude_none=True)
+        elif isinstance(safety_attributes, dict):
+            payload = safety_attributes
+        else:
+            return ""
+
+        blocked = payload.get("blocked")
+        categories = payload.get("categories") or payload.get("safety_categories")
+        scores = payload.get("scores") or payload.get("safety_scores")
+        parts = []
+        if blocked is not None:
+            parts.append(f"blocked={blocked}")
+        if categories:
+            parts.append(f"categories={categories}")
+        if scores:
+            parts.append(f"scores={scores}")
+        if not parts:
+            return ""
+        return "安全属性：" + "，".join(str(part) for part in parts)
 
     def _load_image_from_bytes(self, raw_bytes: bytes) -> Image.Image:
         try:

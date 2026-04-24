@@ -13,6 +13,8 @@ from PIL import Image, ImageDraw, UnidentifiedImageError
 
 DEFAULT_SUFFIX = "result"
 MAX_IMAGE_PIXELS = 40_000_000
+MAX_PROVIDER_IMAGE_EDGE = 2048
+PROVIDER_JPEG_QUALITY = 90
 _OCR_READER = None
 
 
@@ -119,6 +121,32 @@ def prepare_input_image_bytes(
     raise ImageUtilsError("必须提供 image_bytes 或 image。")
 
 
+def prepare_provider_image_bytes(image_bytes: bytes) -> bytes:
+    """Normalize uploads into provider-friendly bytes without inflating JPGs."""
+    image = load_image_from_bytes(image_bytes)
+    normalized = resize_image_for_provider(image, max_edge=MAX_PROVIDER_IMAGE_EDGE)
+
+    if normalized.mode == "RGBA" and _has_meaningful_alpha(normalized):
+        return pil_image_to_png_bytes(normalized)
+
+    return pil_image_to_jpeg_bytes(normalized, quality=PROVIDER_JPEG_QUALITY)
+
+
+def resize_image_for_provider(image: Image.Image, max_edge: int) -> Image.Image:
+    """Keep provider requests compact while preserving the source composition."""
+    width, height = image.size
+    longest_edge = max(width, height)
+    if longest_edge <= max_edge:
+        return image.copy()
+
+    scale = max_edge / longest_edge
+    target_size = (
+        max(1, round(width * scale)),
+        max(1, round(height * scale)),
+    )
+    return image.resize(target_size, Image.Resampling.LANCZOS)
+
+
 def pil_image_to_png_bytes(image: Image.Image) -> bytes:
     """Serialize a PIL image to PNG bytes."""
     if image.mode not in {"RGB", "RGBA"}:
@@ -129,6 +157,25 @@ def pil_image_to_png_bytes(image: Image.Image) -> bytes:
     buffer = io.BytesIO()
     normalized.save(buffer, format="PNG")
     return buffer.getvalue()
+
+
+def pil_image_to_jpeg_bytes(image: Image.Image, quality: int = PROVIDER_JPEG_QUALITY) -> bytes:
+    """Serialize a PIL image to compact JPEG bytes for provider requests."""
+    if image.mode != "RGB":
+        normalized = image.convert("RGB")
+    else:
+        normalized = image.copy()
+
+    buffer = io.BytesIO()
+    normalized.save(buffer, format="JPEG", quality=quality, optimize=True)
+    return buffer.getvalue()
+
+
+def _has_meaningful_alpha(image: Image.Image) -> bool:
+    if image.mode != "RGBA":
+        return False
+    alpha = image.getchannel("A")
+    return alpha.getextrema() != (255, 255)
 
 
 def remove_watermark_if_needed(

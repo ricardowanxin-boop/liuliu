@@ -20,6 +20,7 @@ from utils.image_utils import (
     build_output_filename,
     build_provider_input_filename,
     prepare_input_image_bytes,
+    prepare_provider_image_bytes,
     remove_watermark_if_needed,
     split_keywords,
 )
@@ -52,6 +53,27 @@ DEFAULT_DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 DEFAULT_DOUBAO_MODEL = "doubao-seedream-5-0-260128"
 DEFAULT_DOUBAO_SIZE = "2K"
 DOUBAO_SIZE_OPTIONS = ["2K", "4K"]
+DOUBAO_IMAGE_MODELS = [
+    {
+        "slug": "doubao-seedream-5-0-260128",
+        "label": "Doubao-Seedream-5.0",
+        "response_format": "b64_json",
+        "watermark": False,
+        "extra_payload": {},
+    },
+    {
+        "slug": "doubao-seedream-4-5-251128",
+        "label": "Doubao-Seedream-4.5",
+        "response_format": "url",
+        "watermark": False,
+        "extra_payload": {
+            "sequential_image_generation": "disabled",
+            "stream": False,
+        },
+    },
+]
+DOUBAO_MODEL_OPTIONS = [item["slug"] for item in DOUBAO_IMAGE_MODELS]
+DOUBAO_MODEL_CONFIG = {item["slug"]: item for item in DOUBAO_IMAGE_MODELS}
 DEFAULT_ZENMUX_BASE_URL = "https://zenmux.ai/api/vertex-ai"
 DEFAULT_ZENMUX_MODEL = "openai/gpt-image-2"
 ZENMUX_IMAGE_MODELS = [
@@ -480,6 +502,35 @@ def get_zenmux_api_mode(model: str) -> str:
     return "imagen"
 
 
+def get_doubao_response_format(model: str) -> str:
+    """Choose the Ark response format known to work for each native model."""
+    configured = DOUBAO_MODEL_CONFIG.get(model, {})
+    return str(configured.get("response_format") or "b64_json")
+
+
+def get_doubao_watermark(model: str) -> bool:
+    """Keep API-side watermarks off unless a model preset explicitly needs them."""
+    configured = DOUBAO_MODEL_CONFIG.get(model, {})
+    return bool(configured.get("watermark", False))
+
+
+def get_doubao_extra_payload(model: str) -> dict[str, Any]:
+    """Return optional Ark request fields for model-specific native APIs."""
+    configured = DOUBAO_MODEL_CONFIG.get(model, {})
+    extra_payload = configured.get("extra_payload")
+    if isinstance(extra_payload, dict):
+        return dict(extra_payload)
+    return {}
+
+
+def format_doubao_model(model: str) -> str:
+    configured = DOUBAO_MODEL_CONFIG.get(model)
+    if not configured:
+        return model
+    response_format = configured.get("response_format") or "b64_json"
+    return f"{configured['label']} · {configured['slug']} · {response_format}"
+
+
 def format_zenmux_model(model: str) -> str:
     configured = ZENMUX_MODEL_CONFIG.get(model)
     if not configured:
@@ -536,6 +587,9 @@ def build_provider(
     model: str,
     api_key: str,
     doubao_size: str,
+    doubao_response_format: str = "b64_json",
+    doubao_watermark: bool = False,
+    doubao_extra_payload: dict[str, Any] | None = None,
     zenmux_api_mode: str = "auto",
 ) -> BaseImageProvider:
     """Build the requested provider adapter."""
@@ -553,8 +607,9 @@ def build_provider(
             model=model,
             api_key=api_key,
             size=doubao_size,
-            watermark=False,
-            response_format="b64_json",
+            watermark=doubao_watermark,
+            response_format=doubao_response_format,
+            extra_payload=doubao_extra_payload or {},
         )
 
     return OpenAICompatibleProvider(
@@ -830,6 +885,9 @@ def main() -> None:
                 zenmux_api_mode = get_zenmux_api_mode(model)
                 st.caption(f"ZenMux 调用模式：`{zenmux_api_mode}`。价格字段来自 ZenMux 模型页，仅作试用前参考，请以控制台账单为准。")
                 doubao_size = DEFAULT_DOUBAO_SIZE
+                doubao_response_format = "b64_json"
+                doubao_watermark = False
+                doubao_extra_payload = {}
             elif provider_type == DOUBAO_PROVIDER:
                 api_key, api_key_source = resolve_doubao_api_key()
                 base_url = st.text_input(
@@ -839,11 +897,17 @@ def main() -> None:
                     help="默认值为火山方舟 Ark 图片生成 API，北京地域可直接使用；如你用其他地域，请替换为对应地域的 Base URL。",
                     disabled=controls_disabled,
                 ).strip()
-                model = st.text_input(
+                current_model = resolve_doubao_model()
+                model_options = DOUBAO_MODEL_OPTIONS + (
+                    [current_model] if current_model and current_model not in DOUBAO_MODEL_OPTIONS else []
+                )
+                model = st.selectbox(
                     "Doubao Model",
-                    value=resolve_doubao_model(),
+                    options=model_options,
+                    index=model_options.index(current_model) if current_model in model_options else 0,
+                    format_func=format_doubao_model,
                     key="doubao_model",
-                    help="推荐先用 doubao-seedream-5-0-260128。",
+                    help="原生 Ark 预置包含 doubao-seedream-5-0-260128 与 doubao-seedream-4-5-251128；也可通过 env/secrets 覆盖为自定义模型名。",
                     disabled=controls_disabled,
                 ).strip()
                 doubao_size = st.selectbox(
@@ -854,7 +918,18 @@ def main() -> None:
                     help="当前模型建议使用 2K 或 4K。1024x1024 会被 Ark 拒绝。",
                     disabled=controls_disabled,
                 )
+                doubao_response_format = get_doubao_response_format(model)
+                doubao_watermark = get_doubao_watermark(model)
+                doubao_extra_payload = get_doubao_extra_payload(model)
                 zenmux_api_mode = "auto"
+                extra_fields = "，".join(
+                    f"`{key}={value}`" for key, value in doubao_extra_payload.items()
+                )
+                st.caption(
+                    f"Doubao 原生 Ark 调用：`/images/generations`，"
+                    f"`response_format={doubao_response_format}`"
+                    + (f"，附加字段：{extra_fields}" if extra_fields else "。")
+                )
             else:
                 api_key, api_key_source = resolve_openai_api_key()
                 base_url = st.text_input(
@@ -872,6 +947,9 @@ def main() -> None:
                     disabled=controls_disabled,
                 ).strip()
                 doubao_size = DEFAULT_DOUBAO_SIZE
+                doubao_response_format = "b64_json"
+                doubao_watermark = False
+                doubao_extra_payload = {}
                 zenmux_api_mode = "auto"
 
             if api_key:
@@ -962,6 +1040,9 @@ def main() -> None:
                         model=model,
                         api_key=api_key,
                         doubao_size=doubao_size,
+                        doubao_response_format=doubao_response_format,
+                        doubao_watermark=doubao_watermark,
+                        doubao_extra_payload=doubao_extra_payload,
                         zenmux_api_mode=zenmux_api_mode,
                     )
                 except ImageProviderError as exc:
@@ -986,7 +1067,8 @@ def main() -> None:
                         source_name = uploaded_file.name
                         try:
                             status_placeholder.write(f"正在处理第 {index}/{total} 张：`{source_name}`")
-                            input_bytes = prepare_input_image_bytes(uploaded_file.getvalue())
+                            original_bytes = uploaded_file.getvalue()
+                            input_bytes = prepare_provider_image_bytes(original_bytes)
                             provider_filename = build_provider_input_filename(source_name, input_bytes)
                             generated_image = provider.edit_image(
                                 image_bytes=input_bytes,

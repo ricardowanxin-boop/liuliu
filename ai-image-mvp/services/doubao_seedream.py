@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import base64
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import urljoin
 
@@ -29,6 +29,7 @@ class DoubaoSeedreamProvider(BaseImageProvider):
     size: str = DEFAULT_SIZE
     response_format: str = "b64_json"
     watermark: bool = False
+    extra_payload: dict[str, Any] = field(default_factory=dict)
     timeout: int = DEFAULT_TIMEOUT_SECONDS
 
     def __post_init__(self) -> None:
@@ -78,6 +79,13 @@ class DoubaoSeedreamProvider(BaseImageProvider):
             "watermark": self.watermark,
             "image": self._to_data_url(image_bytes, filename),
         }
+        payload.update(
+            {
+                key: value
+                for key, value in self.extra_payload.items()
+                if value is not None
+            }
+        )
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "application/json",
