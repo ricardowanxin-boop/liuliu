@@ -1,0 +1,24 @@
+{
+  "input_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/提示词/微信图片_20260423235926_398_26.jpg",
+  "input_size": [
+    1280,
+    1707
+  ],
+  "prompt_path": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/提示词/提示词·.txt",
+  "prompt_excerpt": "去掉水印，更换背景，ins风，可以改变桌子颜色，可以咖啡店背景\n指甲改成通明带钻，全部一样的指甲样式，衣袖也全部更改，换成一样的样式。",
+  "provider": "doubao_seedream_ark",
+  "model": "doubao-seedream-5-0-260128",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+  "size": "2K",
+  "latency_seconds": 34.93,
+  "output_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-e2e-20260424-001706/微信图片_20260423235926_398_26-doubao-test.png",
+  "output_zip": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-e2e-20260424-001706/doubao-test-results.zip",
+  "output_size": [
+    1728,
+    2304
+  ],
+  "output_mode": "RGB",
+  "cleanup_note": "",
+  "zip_size_bytes": 3358080,
+  "image_size_bytes": 3356857
+}

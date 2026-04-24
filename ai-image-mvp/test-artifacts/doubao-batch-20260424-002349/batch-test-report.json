@@ -1,0 +1,67 @@
+{
+  "provider": "doubao_seedream_ark",
+  "model": "doubao-seedream-5-0-260128",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+  "prompt_path": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/提示词/提示词·.txt",
+  "prompt_excerpt": "去掉水印，更换背景，ins风，可以改变桌子颜色，可以咖啡店背景\n指甲改成通明带钻，全部一样的指甲样式，衣袖也全部更改，换成一样的样式。",
+  "size": "2K",
+  "total": 3,
+  "passed": 3,
+  "failed": 0,
+  "zip_path": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-batch-20260424-002349/doubao-batch-results.zip",
+  "zip_exists": true,
+  "zip_size_bytes": 9657528,
+  "results": [
+    {
+      "source_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/微信图片_20260423193909_3_309.jpg",
+      "status": "passed",
+      "latency_seconds": 36.98,
+      "input_size": [
+        1440,
+        1920
+      ],
+      "output_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-batch-20260424-002349/微信图片_20260423193909_3_309-doubao-batch.png",
+      "output_size": [
+        1728,
+        2304
+      ],
+      "output_mode": "RGB",
+      "output_size_bytes": 3139104,
+      "cleanup_note": "已通过底部区域启发式方式清理疑似水印。"
+    },
+    {
+      "source_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/微信图片_20260423193910_4_309.jpg",
+      "status": "passed",
+      "latency_seconds": 34.36,
+      "input_size": [
+        1440,
+        1920
+      ],
+      "output_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-batch-20260424-002349/微信图片_20260423193910_4_309-doubao-batch.png",
+      "output_size": [
+        1728,
+        2304
+      ],
+      "output_mode": "RGB",
+      "output_size_bytes": 3344397,
+      "cleanup_note": ""
+    },
+    {
+      "source_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/业务资料/微信图片_20260423193913_6_309.jpg",
+      "status": "passed",
+      "latency_seconds": 32.79,
+      "input_size": [
+        1440,
+        1920
+      ],
+      "output_image": "/Users/ricardo/文稿/创业/商业计划/刘刘电商解决方案/ai-image-mvp/test-artifacts/doubao-batch-20260424-002349/微信图片_20260423193913_6_309-doubao-batch.png",
+      "output_size": [
+        1728,
+        2304
+      ],
+      "output_mode": "RGB",
+      "output_size_bytes": 3171057,
+      "cleanup_note": "已通过底部区域启发式方式清理疑似水印。"
+    }
+  ]
+}
