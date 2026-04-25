@@ -18,11 +18,23 @@ from backend.services.image_preprocess import (
     ImagePreprocessError,
     build_provider_input_filename,
     image_to_data_url,
+    load_image_from_bytes,
     prepare_provider_image_bytes,
     remove_watermark_if_needed,
     split_keywords,
 )
+from backend.services.iteration_logger import (
+    IterationLogResult,
+    write_generation_failure_log,
+    write_generation_iteration_log,
+)
 from backend.services.prompt_compiler import compile_generation_prompt
+from backend.services.quality_control import (
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_QUALITY_THRESHOLD,
+    build_quality_retry_prompt,
+    evaluate_generated_image,
+)
 from backend.services.providers.doubao_seedream import DoubaoSeedreamProvider
 from backend.services.providers.openai_compatible import OpenAICompatibleProvider
 from backend.services.providers.provider_base import BaseImageProvider, ImageProviderError
@@ -38,6 +50,14 @@ class UploadedImagePayload:
 
 
 @dataclass(frozen=True, slots=True)
+class ProcessFileResult:
+    """One file response plus the actual number of provider calls used."""
+
+    item: GenerationItemResponse
+    provider_call_count: int
+
+
+@dataclass(frozen=True, slots=True)
 class GenerationOptions:
     """Options accepted from the React generation form."""
 
@@ -47,10 +67,13 @@ class GenerationOptions:
     size: str | None = None
     quality: str | None = None
     output_format: str | None = None
-    realistic_mode: bool = False
+    realistic_mode: bool = True
     style_template: str | None = None
     watermark_cleanup_enabled: bool = True
     watermark_keywords: str | None = None
+    quality_control_enabled: bool = True
+    quality_threshold: int = DEFAULT_QUALITY_THRESHOLD
+    quality_max_retries: int = DEFAULT_MAX_RETRIES
 
 
 def run_generation(
@@ -92,22 +115,34 @@ def run_generation(
         )
 
     items: list[GenerationItemResponse] = []
-    for file in files:
-        items.append(
-            _process_single_file(
-                provider=provider,
-                file=file,
-                prompt=compiled_prompt,
-                output_format=options.output_format,
-                watermark_cleanup_enabled=options.watermark_cleanup_enabled,
-                watermark_keywords=options.watermark_keywords,
-            )
+    provider_call_count = 0
+    provider_call_limit = len(files) * (1 + max(0, min(2, options.quality_max_retries)))
+    for index, file in enumerate(files, start=1):
+        process_result = _process_single_file(
+            job_id=job_id,
+            file_index=index,
+            provider=provider,
+            file=file,
+            user_prompt=options.prompt,
+            compiled_prompt=compiled_prompt,
+            provider_type=runtime_config.provider_type,
+            model=runtime_config.model,
+            output_format=options.output_format,
+            watermark_cleanup_enabled=options.watermark_cleanup_enabled,
+            watermark_keywords=options.watermark_keywords,
+            quality_control_enabled=options.quality_control_enabled,
+            quality_threshold=options.quality_threshold,
+            quality_max_retries=options.quality_max_retries,
         )
+        items.append(process_result.item)
+        provider_call_count += process_result.provider_call_count
 
     return GenerationJobResponse(
         jobId=job_id,
         status=_summarize_job_status(items),
         items=items,
+        providerCallCount=provider_call_count,
+        providerCallLimit=provider_call_limit,
     )
 
 
@@ -147,48 +182,272 @@ def build_provider(config: ProviderRuntimeConfig) -> BaseImageProvider:
 
 def _process_single_file(
     *,
+    job_id: str,
+    file_index: int,
     provider: BaseImageProvider,
     file: UploadedImagePayload,
-    prompt: str,
+    user_prompt: str,
+    compiled_prompt: str,
+    provider_type: str,
+    model: str,
     output_format: str | None,
     watermark_cleanup_enabled: bool,
     watermark_keywords: str | None,
-) -> GenerationItemResponse:
+    quality_control_enabled: bool,
+    quality_threshold: int,
+    quality_max_retries: int,
+) -> ProcessFileResult:
+    retry_count = 0
+    final_assessment = None
+    cleanup_note = ""
+    current_prompt = compiled_prompt
+    max_retries = max(0, min(2, quality_max_retries))
+    threshold = max(1, min(100, quality_threshold))
+    last_log_path: str | None = None
+    last_stage_summary_path: str | None = None
+    last_switch_review_path: str | None = None
+    last_switch_warning: str | None = None
+    provider_call_count = 0
+
     try:
         provider_bytes = prepare_provider_image_bytes(file.content)
         provider_filename = build_provider_input_filename(file.source_name, provider_bytes)
-        generated_image = provider.edit_image(
-            image_bytes=provider_bytes,
-            prompt=prompt,
-            filename=provider_filename,
-        )
-        cleanup_note = ""
-        if watermark_cleanup_enabled:
-            generated_image, cleanup_note = remove_watermark_if_needed(
-                generated_image,
-                keywords=split_keywords(watermark_keywords),
+        source_image_for_quality = None
+        if quality_control_enabled:
+            source_image_for_quality = load_image_from_bytes(file.content)
+
+        while True:
+            provider_call_count += 1
+            generated_image = provider.edit_image(
+                image_bytes=provider_bytes,
+                prompt=current_prompt,
+                filename=provider_filename,
             )
-        return GenerationItemResponse(
-            sourceName=file.source_name,
-            status="done",
-            progress=100,
-            resultDataUrl=image_to_data_url(generated_image, output_format or "png"),
-            cleanupNote=cleanup_note or None,
-        )
+            cleanup_note = ""
+            if watermark_cleanup_enabled:
+                generated_image, cleanup_note = remove_watermark_if_needed(
+                    generated_image,
+                    keywords=split_keywords(watermark_keywords),
+                )
+
+            if not quality_control_enabled:
+                log_result = write_generation_iteration_log(
+                    source_name=file.source_name,
+                    source_image_bytes=file.content,
+                    generated_image=generated_image,
+                    provider_type=provider_type,
+                    model=model,
+                    prompt=user_prompt,
+                    compiled_prompt=current_prompt,
+                    attempt=retry_count + 1,
+                    status="done",
+                    assessment=None,
+                    cleanup_note=cleanup_note or None,
+                    job_id=job_id,
+                    file_index=file_index,
+                )
+                last_log_path = log_result.log_path
+                last_stage_summary_path = log_result.stage_summary_path
+                last_switch_review_path = log_result.switch_review_path
+                last_switch_warning = log_result.switch_warning
+                return ProcessFileResult(
+                    item=GenerationItemResponse(
+                        sourceName=file.source_name,
+                        status="done",
+                        progress=100,
+                        resultDataUrl=image_to_data_url(generated_image, output_format or "png"),
+                        cleanupNote=cleanup_note or None,
+                        retryCount=retry_count,
+                        retried=retry_count > 0,
+                        qualityRetryLimit=max_retries,
+                        iterationLogPath=last_log_path,
+                        stageSummaryPath=last_stage_summary_path,
+                        switchReviewPath=last_switch_review_path,
+                        switchWarning=last_switch_warning,
+                    ),
+                    provider_call_count=provider_call_count,
+                )
+
+            final_assessment = evaluate_generated_image(
+                generated_image,
+                threshold=threshold,
+                source_image=source_image_for_quality,
+            )
+            status = "done" if final_assessment.passed else "quality_failed_retrying"
+            if not final_assessment.passed and retry_count >= max_retries:
+                status = "failed"
+            log_result = write_generation_iteration_log(
+                source_name=file.source_name,
+                source_image_bytes=file.content,
+                generated_image=generated_image,
+                provider_type=provider_type,
+                model=model,
+                prompt=user_prompt,
+                compiled_prompt=current_prompt,
+                attempt=retry_count + 1,
+                status=status,
+                assessment=final_assessment,
+                cleanup_note=cleanup_note or None,
+                error=None if final_assessment.passed else "自动质检未通过",
+                job_id=job_id,
+                file_index=file_index,
+            )
+            last_log_path = log_result.log_path
+            last_stage_summary_path = log_result.stage_summary_path
+            last_switch_review_path = log_result.switch_review_path
+            last_switch_warning = log_result.switch_warning
+
+            if final_assessment.passed:
+                return ProcessFileResult(
+                    item=GenerationItemResponse(
+                        sourceName=file.source_name,
+                        status="done",
+                        progress=100,
+                        resultDataUrl=image_to_data_url(generated_image, output_format or "png"),
+                        cleanupNote=cleanup_note or None,
+                        qualityScore=final_assessment.score,
+                        qualityPassed=True,
+                        qualityReasons=final_assessment.reasons,
+                        retryCount=retry_count,
+                        retried=retry_count > 0,
+                        qualityRetryLimit=max_retries,
+                        iterationLogPath=last_log_path,
+                        stageSummaryPath=last_stage_summary_path,
+                        switchReviewPath=last_switch_review_path,
+                        switchWarning=last_switch_warning,
+                    ),
+                    provider_call_count=provider_call_count,
+                )
+
+            if retry_count >= max_retries:
+                return ProcessFileResult(
+                    item=GenerationItemResponse(
+                        sourceName=file.source_name,
+                        status="failed",
+                        progress=100,
+                        cleanupNote=cleanup_note or None,
+                        qualityScore=final_assessment.score,
+                        qualityPassed=False,
+                        qualityReasons=final_assessment.reasons,
+                        retryCount=retry_count,
+                        retried=retry_count > 0,
+                        qualityRetryLimit=max_retries,
+                        iterationLogPath=last_log_path,
+                        stageSummaryPath=last_stage_summary_path,
+                        switchReviewPath=last_switch_review_path,
+                        switchWarning=last_switch_warning,
+                        error=f"自动质检未通过（{final_assessment.score}分）：{'；'.join(final_assessment.reasons)}",
+                    ),
+                    provider_call_count=provider_call_count,
+                )
+
+            retry_count += 1
+            current_prompt = build_quality_retry_prompt(compiled_prompt, final_assessment)
+
     except (ImagePreprocessError, ImageProviderError) as exc:
-        return GenerationItemResponse(
-            sourceName=file.source_name,
-            status="failed",
-            progress=100,
+        failure_log = _try_write_failure_log(
+            source_name=file.source_name,
+            source_image_bytes=file.content,
+            provider_type=provider_type,
+            model=model,
+            user_prompt=user_prompt,
+            compiled_prompt=current_prompt,
+            attempt=retry_count + 1,
             error=str(exc),
+            job_id=job_id,
+            file_index=file_index,
+        )
+        if failure_log:
+            last_log_path = failure_log.log_path
+            last_stage_summary_path = failure_log.stage_summary_path
+            last_switch_review_path = failure_log.switch_review_path
+            last_switch_warning = failure_log.switch_warning
+        return ProcessFileResult(
+            item=GenerationItemResponse(
+                sourceName=file.source_name,
+                status="failed",
+                progress=100,
+                qualityScore=final_assessment.score if final_assessment else None,
+                qualityPassed=final_assessment.passed if final_assessment else None,
+                qualityReasons=final_assessment.reasons if final_assessment else [],
+                retryCount=retry_count,
+                retried=retry_count > 0,
+                qualityRetryLimit=max_retries,
+                iterationLogPath=last_log_path,
+                stageSummaryPath=last_stage_summary_path,
+                switchReviewPath=last_switch_review_path,
+                switchWarning=last_switch_warning,
+                error=str(exc),
+            ),
+            provider_call_count=provider_call_count,
         )
     except Exception as exc:
-        return GenerationItemResponse(
-            sourceName=file.source_name,
-            status="failed",
-            progress=100,
+        failure_log = _try_write_failure_log(
+            source_name=file.source_name,
+            source_image_bytes=file.content,
+            provider_type=provider_type,
+            model=model,
+            user_prompt=user_prompt,
+            compiled_prompt=current_prompt,
+            attempt=retry_count + 1,
             error=f"处理图片时发生未知错误：{exc}",
+            job_id=job_id,
+            file_index=file_index,
         )
+        if failure_log:
+            last_log_path = failure_log.log_path
+            last_stage_summary_path = failure_log.stage_summary_path
+            last_switch_review_path = failure_log.switch_review_path
+            last_switch_warning = failure_log.switch_warning
+        return ProcessFileResult(
+            item=GenerationItemResponse(
+                sourceName=file.source_name,
+                status="failed",
+                progress=100,
+                qualityScore=final_assessment.score if final_assessment else None,
+                qualityPassed=final_assessment.passed if final_assessment else None,
+                qualityReasons=final_assessment.reasons if final_assessment else [],
+                retryCount=retry_count,
+                retried=retry_count > 0,
+                qualityRetryLimit=max_retries,
+                iterationLogPath=last_log_path,
+                stageSummaryPath=last_stage_summary_path,
+                switchReviewPath=last_switch_review_path,
+                switchWarning=last_switch_warning,
+                error=f"处理图片时发生未知错误：{exc}",
+            ),
+            provider_call_count=provider_call_count,
+        )
+
+
+def _try_write_failure_log(
+    *,
+    source_name: str,
+    source_image_bytes: bytes,
+    provider_type: str,
+    model: str,
+    user_prompt: str,
+    compiled_prompt: str,
+    attempt: int,
+    error: str,
+    job_id: str,
+    file_index: int,
+) -> IterationLogResult | None:
+    try:
+        return write_generation_failure_log(
+            source_name=source_name,
+            source_image_bytes=source_image_bytes,
+            provider_type=provider_type,
+            model=model,
+            prompt=user_prompt,
+            compiled_prompt=compiled_prompt,
+            attempt=attempt,
+            error=error,
+            job_id=job_id,
+            file_index=file_index,
+        )
+    except Exception:
+        return None
 
 
 def _summarize_job_status(items: list[GenerationItemResponse]) -> str:

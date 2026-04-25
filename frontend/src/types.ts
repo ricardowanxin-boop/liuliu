@@ -22,6 +22,9 @@ export interface GenerationRequest {
   realisticMode: boolean;
   watermarkCleanupEnabled: boolean;
   watermarkKeywords: string;
+  qualityControlEnabled: boolean;
+  qualityThreshold: number;
+  qualityMaxRetries: number;
 }
 
 export interface GenerationResponseItem {
@@ -31,6 +34,16 @@ export interface GenerationResponseItem {
   resultUrl?: string;
   resultDataUrl?: string;
   cleanupNote?: string;
+  qualityScore?: number;
+  qualityPassed?: boolean;
+  qualityReasons?: string[];
+  retryCount?: number;
+  retried?: boolean;
+  qualityRetryLimit?: number;
+  iterationLogPath?: string;
+  stageSummaryPath?: string;
+  switchReviewPath?: string;
+  switchWarning?: string;
   error?: string;
 }
 
@@ -38,6 +51,8 @@ export interface GenerationResponse {
   jobId?: string;
   status?: string;
   items?: GenerationResponseItem[];
+  providerCallCount?: number;
+  providerCallLimit?: number;
 }
 
 export interface RuntimeConfig {
@@ -70,9 +85,20 @@ export interface ResultItem {
   jobId: string;
   title: string;
   imageUrl?: string;
+  sourceImageUrl?: string;
   sourceName: string;
   prompt: string;
   size: string;
   createdAt: string;
   cleanupNote?: string;
+  qualityScore?: number;
+  qualityPassed?: boolean;
+  qualityReasons?: string[];
+  retryCount?: number;
+  retried?: boolean;
+  qualityRetryLimit?: number;
+  iterationLogPath?: string;
+  stageSummaryPath?: string;
+  switchReviewPath?: string;
+  switchWarning?: string;
 }

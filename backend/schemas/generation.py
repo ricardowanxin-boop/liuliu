@@ -29,6 +29,16 @@ class GenerationItemResponse(BaseModel):
     progress: int = Field(ge=0, le=100)
     resultDataUrl: str | None = None
     cleanupNote: str | None = None
+    qualityScore: int | None = Field(default=None, ge=0, le=100)
+    qualityPassed: bool | None = None
+    qualityReasons: list[str] = Field(default_factory=list)
+    retryCount: int = Field(default=0, ge=0)
+    retried: bool = False
+    qualityRetryLimit: int = Field(default=0, ge=0)
+    iterationLogPath: str | None = None
+    stageSummaryPath: str | None = None
+    switchReviewPath: str | None = None
+    switchWarning: str | None = None
     error: str | None = None
 
 
@@ -36,3 +46,5 @@ class GenerationJobResponse(BaseModel):
     jobId: str
     status: str
     items: list[GenerationItemResponse]
+    providerCallCount: int = Field(default=0, ge=0)
+    providerCallLimit: int = Field(default=0, ge=0)

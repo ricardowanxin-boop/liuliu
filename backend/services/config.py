@@ -20,21 +20,14 @@ ZENMUX_PROVIDER = "zenmux"
 ZENMUX_LEGACY_PROVIDER = "zenmux_vertex"
 
 DEFAULT_OPENAI_BASE_URL = "https://deeprouter.top/v1"
-DEFAULT_OPENAI_MODEL = "grok-4-image"
+DEFAULT_OPENAI_MODEL = "gpt-image-2"
 DEFAULT_DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
-DEFAULT_DOUBAO_MODEL = "doubao-seedream-5-0-260128"
+DEFAULT_DOUBAO_MODEL = "doubao-seedream-4-5-251128"
 DEFAULT_DOUBAO_SIZE = "2K"
 DEFAULT_ZENMUX_BASE_URL = "https://zenmux.ai/api/vertex-ai"
 DEFAULT_ZENMUX_MODEL = "openai/gpt-image-2"
 
 DOUBAO_IMAGE_MODELS = [
-    {
-        "slug": "doubao-seedream-5-0-260128",
-        "label": "Doubao-Seedream-5.0",
-        "response_format": "b64_json",
-        "watermark": False,
-        "extra_payload": {},
-    },
     {
         "slug": "doubao-seedream-4-5-251128",
         "label": "Doubao-Seedream-4.5",
@@ -44,6 +37,13 @@ DOUBAO_IMAGE_MODELS = [
             "sequential_image_generation": "disabled",
             "stream": False,
         },
+    },
+    {
+        "slug": "doubao-seedream-5-0-260128",
+        "label": "Doubao-Seedream-5.0",
+        "response_format": "b64_json",
+        "watermark": False,
+        "extra_payload": {},
     },
 ]
 DOUBAO_MODEL_CONFIG = {item["slug"]: item for item in DOUBAO_IMAGE_MODELS}
@@ -160,6 +160,12 @@ def build_public_config() -> dict[str, Any]:
     if default_provider not in provider_configs:
         default_provider = ZENMUX_PROVIDER
 
+    default_model = provider_configs[default_provider].model
+    if default_provider == DOUBAO_PROVIDER:
+        default_model = DEFAULT_DOUBAO_MODEL
+    elif default_provider == ZENMUX_PROVIDER:
+        default_model = DEFAULT_ZENMUX_MODEL
+
     return {
         "providers": [ZENMUX_PROVIDER, DOUBAO_PROVIDER, OPENAI_PROVIDER],
         "defaultProvider": default_provider,
@@ -170,7 +176,7 @@ def build_public_config() -> dict[str, Any]:
         },
         "defaults": {
             "provider": default_provider,
-            "model": provider_configs[default_provider].model,
+            "model": default_model,
             "size": "1024x1024",
             "quality": "standard",
             "outputFormat": "png",

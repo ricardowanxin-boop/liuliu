@@ -15,6 +15,8 @@ from backend.services.generation_service import (
 
 
 router = APIRouter(prefix="/api/generations", tags=["generations"])
+MAX_FILES_PER_REQUEST = 5
+MAX_PROVIDER_CALLS_PER_REQUEST = 10
 
 
 @router.post("", response_model=GenerationJobResponse)
@@ -27,10 +29,13 @@ async def create_generation(
     size: Annotated[str | None, Form()] = None,
     quality: Annotated[str | None, Form()] = "standard",
     output_format: Annotated[str | None, Form()] = "png",
-    realistic_mode: Annotated[bool, Form()] = False,
+    realistic_mode: Annotated[bool, Form()] = True,
     style_template: Annotated[str | None, Form()] = None,
     watermark_cleanup_enabled: Annotated[bool, Form()] = True,
     watermark_keywords: Annotated[str | None, Form()] = None,
+    quality_control_enabled: Annotated[bool, Form()] = True,
+    quality_threshold: Annotated[int, Form()] = 72,
+    quality_max_retries: Annotated[int, Form()] = 1,
 ) -> GenerationJobResponse:
     """Run a synchronous generation job for uploaded reference images."""
     form = await request.form()
@@ -42,9 +47,19 @@ async def create_generation(
 
     if not uploads:
         raise HTTPException(status_code=400, detail="请至少上传一张图片。")
+    if len(uploads) > MAX_FILES_PER_REQUEST:
+        raise HTTPException(status_code=400, detail=f"单次最多上传 {MAX_FILES_PER_REQUEST} 张图片。")
 
     if not (prompt or "").strip():
         raise HTTPException(status_code=400, detail="提示词不能为空。")
+
+    normalized_retries = max(0, min(2, quality_max_retries))
+    planned_calls = len(uploads) * (1 + normalized_retries)
+    if planned_calls > MAX_PROVIDER_CALLS_PER_REQUEST:
+        raise HTTPException(
+            status_code=400,
+            detail=f"本次预计调用 {planned_calls} 次模型，超过单次预算 {MAX_PROVIDER_CALLS_PER_REQUEST} 次。",
+        )
 
     payloads: list[UploadedImagePayload] = []
     for upload in uploads:
@@ -67,5 +82,8 @@ async def create_generation(
         style_template=style_template,
         watermark_cleanup_enabled=watermark_cleanup_enabled,
         watermark_keywords=watermark_keywords,
+        quality_control_enabled=quality_control_enabled,
+        quality_threshold=quality_threshold,
+        quality_max_retries=normalized_retries,
     )
     return run_generation(files=payloads, options=options)

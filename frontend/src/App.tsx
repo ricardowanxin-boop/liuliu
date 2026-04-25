@@ -37,6 +37,7 @@ import type {
   ResultItem,
   RuntimeConfig,
   UploadedImage,
+  GenerationResponseItem,
 } from "./types";
 
 const promptHints = [
@@ -52,14 +53,15 @@ const promptHints = [
 
 const providerModels: Record<Provider, string[]> = {
   zenmux: ["openai/gpt-image-2", "bytedance/doubao-seedream-5.0-lite"],
-  doubao: ["doubao-seedream-5-0-260128"],
+  doubao: ["doubao-seedream-4-5-251128", "doubao-seedream-5-0-260128"],
   openai_compatible: ["openai/gpt-image-2"],
 };
 
 const samplePrompt =
-  "一张干净的产品照片：薰衣草紫水晶珠与珍珠点缀的手链，放在透明亚克力托盘上。柔和自然光，白色与浅粉色美学，优雅极简。";
+  "去掉水印，更换背景，ins风，可以改变桌子颜色\n指甲改成通明带钻，全部一样的指甲样式，衣袖也全部更改，换成一样的样式";
 
 const defaultWatermarkKeywords = "AI生成, 夸克, quark, watermark";
+const maxUploadCount = 5;
 
 const statusLabel: Record<QueueStatus, string> = {
   queued: "排队中",
@@ -78,11 +80,19 @@ function makeId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function sanitizeDownloadName(value: string) {
+  return value.trim().replace(/[\\/:*?"<>|]+/g, "-") || "生成结果";
+}
+
 function getStatus(progress: number): QueueStatus {
   if (progress >= 100) return "done";
   if (progress >= 40) return "running";
   if (progress >= 20) return "uploading";
   return "queued";
+}
+
+function isTrustedGenerationItem(item: GenerationResponseItem | undefined): item is GenerationResponseItem {
+  return Boolean(item?.status === "done" && item.resultDataUrl && item.qualityPassed !== false);
 }
 
 function App() {
@@ -95,6 +105,7 @@ function App() {
   const [realisticMode, setRealisticMode] = useState(true);
   const [watermarkCleanupEnabled, setWatermarkCleanupEnabled] = useState(true);
   const [watermarkKeywords, setWatermarkKeywords] = useState(defaultWatermarkKeywords);
+  const [qualityControlEnabled, setQualityControlEnabled] = useState(true);
   const [uploads, setUploads] = useState<UploadedImage[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -155,10 +166,10 @@ function App() {
   const addFiles = async (fileList: FileList | File[]) => {
     const nextFiles = Array.from(fileList)
       .filter((file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type))
-      .slice(0, Math.max(0, 8 - uploads.length));
+      .slice(0, Math.max(0, maxUploadCount - uploads.length));
 
     if (nextFiles.length === 0) {
-      setError("请上传 JPG、PNG 或 WEBP 图片，演示版最多 8 张。");
+      setError(`请上传 JPG、PNG 或 WEBP 图片，单次最多 ${maxUploadCount} 张。`);
       return;
     }
 
@@ -195,9 +206,54 @@ function App() {
   const removeUpload = (id: string) => {
     setUploads((current) => {
       const target = current.find((upload) => upload.id === id);
-      if (target) URL.revokeObjectURL(target.url);
+      const isUsedByResult = target ? results.some((result) => result.sourceImageUrl === target.url) : false;
+      if (target && !isUsedByResult) URL.revokeObjectURL(target.url);
       return current.filter((upload) => upload.id !== id);
     });
+  };
+
+  const triggerDownload = (url: string, filename: string) => {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
+  const exportAllResults = () => {
+    const downloadableResults = results.filter((result) => result.imageUrl);
+    if (downloadableResults.length === 0) {
+      setNotice("暂无可导出的结果图");
+      return;
+    }
+
+    downloadableResults.forEach((result, index) => {
+      window.setTimeout(() => {
+        triggerDownload(
+          result.imageUrl as string,
+          `${sanitizeDownloadName(result.title)}.${outputFormat}`,
+        );
+      }, index * 180);
+    });
+    setNotice(`正在导出 ${downloadableResults.length} 张结果图`);
+  };
+
+  const deleteResult = (id: string) => {
+    setResults((current) => current.filter((result) => result.id !== id));
+    setPreviewResult((current) => (current?.id === id ? null : current));
+    setNotice("已删除 1 组结果");
+  };
+
+  const clearResults = () => {
+    if (results.length === 0) {
+      setNotice("结果画廊已经是空的");
+      return;
+    }
+    setResults([]);
+    setPreviewResult(null);
+    setNotice("已清空结果画廊");
   };
 
   const appendHint = (hint: string) => {
@@ -227,9 +283,14 @@ function App() {
   const completeJob = (
     jobId: string,
     taskIds: string[],
+    taskSources: UploadedImage[],
     serverResponse?: GenerationResponse,
   ) => {
     const responseItems = serverResponse?.items || [];
+    const hasCompleteShape =
+      serverResponse?.status === "completed" &&
+      responseItems.length === taskIds.length &&
+      taskIds.length > 0;
     const generatedAt = new Date().toLocaleTimeString("zh-CN", {
       hour: "2-digit",
       minute: "2-digit",
@@ -238,20 +299,20 @@ function App() {
     setQueue((current) =>
       current.map((item) => {
         const responseItem = responseItems[taskIds.indexOf(item.id)];
-        const failed = responseItem?.status === "failed";
         if (!taskIds.includes(item.id)) return item;
+        const trusted = hasCompleteShape && isTrustedGenerationItem(responseItem);
         return {
           ...item,
           progress: 100,
-          status: failed ? "failed" : "done",
+          status: trusted ? "done" : "failed",
         };
       }),
     );
 
     setResults((current) => {
       const sourceItems =
-        uploads.length > 0
-          ? uploads
+        taskSources.length > 0
+          ? taskSources
           : [
               {
                 id: "text-only",
@@ -260,40 +321,64 @@ function App() {
               } as unknown as UploadedImage,
             ];
 
-      const nextResults = sourceItems.slice(0, 4).flatMap((source, index) => {
+      const nextResults = sourceItems.flatMap((source, index) => {
         const responseItem = responseItems[index];
-        if (responseItem?.status === "failed") {
+        if (!hasCompleteShape || !isTrustedGenerationItem(responseItem)) {
           return [];
         }
 
-        const resultUrl = responseItem?.resultUrl
+        const resultUrl = responseItem.resultUrl
           ? `${apiBaseUrl}${responseItem.resultUrl.startsWith("/") ? "" : "/"}${responseItem.resultUrl}`
-          : responseItem?.resultDataUrl || source.url;
+          : responseItem.resultDataUrl;
+
+        if (!resultUrl) {
+          return [];
+        }
 
         return {
           id: makeId("result"),
           jobId,
           title: `结果 ${current.length + index + 1}`,
           imageUrl: resultUrl,
+          sourceImageUrl: source.url,
           sourceName: source.file.name === "prompt-only" ? "提示词生成" : source.file.name,
           prompt,
           size,
           createdAt: generatedAt,
           cleanupNote: responseItem?.cleanupNote,
+          qualityScore: responseItem?.qualityScore,
+          qualityPassed: responseItem?.qualityPassed,
+          qualityReasons: responseItem?.qualityReasons,
+          retryCount: responseItem?.retryCount,
+          retried: responseItem?.retried,
+          qualityRetryLimit: responseItem?.qualityRetryLimit,
+          iterationLogPath: responseItem?.iterationLogPath,
+          stageSummaryPath: responseItem?.stageSummaryPath,
+          switchReviewPath: responseItem?.switchReviewPath,
+          switchWarning: responseItem?.switchWarning,
         };
       });
       return [...nextResults, ...current].slice(0, 12);
     });
 
     setIsGenerating(false);
-    const failedCount = responseItems.filter((item) => item.status === "failed").length;
-    if (failedCount > 0) {
+    const trustedCount = responseItems.filter(isTrustedGenerationItem).length;
+    const failedCount = Math.max(taskIds.length - trustedCount, 0);
+    if (!hasCompleteShape || failedCount > 0) {
       const firstError = responseItems.find((item) => item.error)?.error;
-      setError(firstError || `${failedCount} 张图片生成失败，请检查模型、Key 或提示词。`);
-      setNotice(`已完成，${failedCount} 张失败`);
+      const callHint =
+        typeof serverResponse?.providerCallCount === "number"
+          ? `（本轮真实调用 ${serverResponse.providerCallCount} 次）`
+          : "";
+      setError(firstError || `${failedCount} 张图片未通过生成/质检流程，请检查模型、Key 或提示词。${callHint}`);
+      setNotice(`生成未通过，${failedCount} 张未交付`);
       return;
     }
-    setNotice("生成完成，结果已加入右侧画廊");
+    setNotice(
+      typeof serverResponse?.providerCallCount === "number"
+        ? `生成完成，结果已加入右侧画廊，本轮调用 ${serverResponse.providerCallCount} 次`
+        : "生成完成，结果已加入右侧画廊",
+    );
   };
 
   const failJob = (taskIds: string[], message: string) => {
@@ -382,8 +467,11 @@ function App() {
         realisticMode,
         watermarkCleanupEnabled,
         watermarkKeywords,
+        qualityControlEnabled,
+        qualityThreshold: 72,
+        qualityMaxRetries: 1,
       });
-      completeJob(response.jobId || jobId, taskIds, response);
+      completeJob(response.jobId || jobId, taskIds, taskSources, response);
     } catch (error) {
       const message =
         error instanceof ApiError
@@ -538,7 +626,7 @@ function App() {
               <div className="section-heading">
                 <div>
                   <h2>参考图</h2>
-                  <p>{uploads.length}/8 张</p>
+                  <p>{uploads.length}/{maxUploadCount} 张</p>
                 </div>
                 <label className="secondary-button small">
                   <ImagePlus size={15} />
@@ -558,7 +646,7 @@ function App() {
               >
                 <UploadCloud size={28} />
                 <strong>拖拽或点击上传参考图</strong>
-                <span>JPG / PNG / WEBP，单张建议 20MB 内</span>
+                <span>JPG / PNG / WEBP，单张建议 20MB 内，最多 {maxUploadCount} 张</span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={onFileChange} />
               </label>
               {uploads.length === 0 ? (
@@ -590,7 +678,7 @@ function App() {
               <div className="section-heading">
                 <div>
                   <h2>出图处理</h2>
-                  <p>去水印与真实电商审美默认开启</p>
+                  <p>反 AI 棚拍、去水印与自动质检默认开启</p>
                 </div>
               </div>
 
@@ -615,6 +703,17 @@ function App() {
                     type="checkbox"
                     checked={watermarkCleanupEnabled}
                     onChange={(event) => setWatermarkCleanupEnabled(event.target.checked)}
+                  />
+                </label>
+                <label className="switch-control">
+                  <span>
+                    自动评分并重试
+                    <small>低于 72 分会自动重试 1 次</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={qualityControlEnabled}
+                    onChange={(event) => setQualityControlEnabled(event.target.checked)}
                   />
                 </label>
                 <label className="keyword-control">
@@ -707,16 +806,18 @@ function App() {
                 <p>{results.length} 张结果</p>
               </div>
               <div className="view-actions">
-                {results.find((result) => result.imageUrl) ? (
-                  <a
-                    className="secondary-button small"
-                    href={results.find((result) => result.imageUrl)?.imageUrl}
-                    download={`${results.find((result) => result.imageUrl)?.title || "生成结果"}.${outputFormat}`}
-                  >
-                    <Download size={15} />
-                    下载首图
-                  </a>
-                ) : null}
+                <button
+                  className="secondary-button small"
+                  disabled={!results.some((result) => result.imageUrl)}
+                  onClick={exportAllResults}
+                >
+                  <Download size={15} />
+                  导出全部
+                </button>
+                <button className="secondary-button small" disabled={results.length === 0} onClick={clearResults}>
+                  <Trash2 size={15} />
+                  清空
+                </button>
                 <button className="icon-button" aria-label="更多操作">
                   <MoreHorizontal size={18} />
                 </button>
@@ -749,38 +850,69 @@ function App() {
                   <label className="select-box" aria-label={`选择 ${result.title}`}>
                     <input type="checkbox" />
                   </label>
-                  {result.imageUrl ? (
+                  <div className="result-pair" aria-label={`${result.title} 原图和结果对比`}>
                     <button
-                      className="result-preview-trigger"
+                      type="button"
+                      className="result-pair-cell"
                       onClick={() => setPreviewResult(result)}
-                      aria-label={`放大预览 ${result.title}`}
+                      disabled={!result.sourceImageUrl}
+                      aria-label={`查看 ${result.title} 原图对比`}
                     >
-                      <img src={result.imageUrl} alt={result.title} />
+                      <span className="pair-label">原图</span>
+                      {result.sourceImageUrl ? (
+                        <img src={result.sourceImageUrl} alt={`${result.sourceName} 原图`} />
+                      ) : (
+                        <span className="pair-placeholder">无原图</span>
+                      )}
                     </button>
-                  ) : (
-                    <div className="text-result">
-                      <Sparkles size={24} />
-                      <span>文本生成结果</span>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      className="result-pair-cell result-pair-cell-output"
+                      onClick={() => setPreviewResult(result)}
+                      disabled={!result.imageUrl}
+                      aria-label={`放大预览 ${result.title} 结果图`}
+                    >
+                      <span className="pair-label">结果</span>
+                      {result.imageUrl ? (
+                        <img src={result.imageUrl} alt={`${result.title} 结果图`} />
+                      ) : (
+                        <span className="pair-placeholder">无结果</span>
+                      )}
+                    </button>
+                  </div>
                   <div className="result-meta">
                     <strong>{result.title}</strong>
                     <span>{result.size.replace("x", " x ")} · {result.createdAt}</span>
+                    {typeof result.qualityScore === "number" ? (
+                      <small className={result.qualityPassed ? "quality-note passed" : "quality-note failed"}>
+                        质检 {result.qualityScore} 分{result.retried ? ` · 已自动重试 ${result.retryCount || 0} 次` : ""}
+                      </small>
+                    ) : null}
+                    {result.iterationLogPath ? <small>已写入迭代日志</small> : null}
+                    {result.stageSummaryPath ? <small>已生成阶段总结</small> : null}
+                    {result.switchReviewPath ? <small className="quality-note failed">已生成换方案评估</small> : null}
+                    {result.switchWarning ? <small className="quality-note failed">{result.switchWarning}</small> : null}
                     {result.cleanupNote ? <small>{result.cleanupNote}</small> : null}
                   </div>
                   <div className="result-actions">
-                    <a
-                      className={result.imageUrl ? "" : "disabled"}
-                      href={result.imageUrl}
-                      download={`${result.title}.${outputFormat}`}
-                      aria-disabled={!result.imageUrl}
+                    <button
+                      disabled={!result.imageUrl}
+                      onClick={() => {
+                        if (result.imageUrl) {
+                          triggerDownload(result.imageUrl, `${sanitizeDownloadName(result.title)}.${outputFormat}`);
+                        }
+                      }}
                     >
                       <Download size={15} />
                       下载
-                    </a>
+                    </button>
                     <button onClick={() => setPreviewResult(result)} disabled={!result.imageUrl}>
                       <Maximize2 size={15} />
                       预览
+                    </button>
+                    <button className="danger-action" onClick={() => deleteResult(result.id)}>
+                      <Trash2 size={15} />
+                      删除
                     </button>
                   </div>
                 </article>
@@ -850,7 +982,7 @@ function App() {
                 {previewResult.imageUrl ? (
                   <a href={previewResult.imageUrl} download={`${previewResult.title}.${outputFormat}`}>
                     <Download size={16} />
-                    下载原图
+                    下载结果图
                   </a>
                 ) : null}
                 <button onClick={() => setPreviewResult(null)} aria-label="关闭预览">
@@ -858,9 +990,20 @@ function App() {
                 </button>
               </div>
             </div>
-            {previewResult.imageUrl ? (
-              <img src={previewResult.imageUrl} alt={previewResult.title} />
-            ) : null}
+            <div className="preview-compare">
+              {previewResult.sourceImageUrl ? (
+                <figure>
+                  <figcaption>原图</figcaption>
+                  <img src={previewResult.sourceImageUrl} alt={`${previewResult.sourceName} 原图`} />
+                </figure>
+              ) : null}
+              {previewResult.imageUrl ? (
+                <figure>
+                  <figcaption>结果</figcaption>
+                  <img src={previewResult.imageUrl} alt={`${previewResult.title} 结果图`} />
+                </figure>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

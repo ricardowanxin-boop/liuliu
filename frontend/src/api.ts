@@ -52,6 +52,9 @@ export async function createGeneration(
   formData.append("realistic_mode", String(request.realisticMode));
   formData.append("watermark_cleanup_enabled", String(request.watermarkCleanupEnabled));
   formData.append("watermark_keywords", request.watermarkKeywords);
+  formData.append("quality_control_enabled", String(request.qualityControlEnabled));
+  formData.append("quality_threshold", String(request.qualityThreshold));
+  formData.append("quality_max_retries", String(request.qualityMaxRetries));
 
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 310_000);

@@ -48,7 +48,7 @@ class ZenMuxVertexProvider(BaseImageProvider):
         self._client = genai.Client(
             api_key=self.api_key,
             vertexai=True,
-            http_options=types.HttpOptions(api_version="v1", base_url=self.base_url),
+            http_options=types.HttpOptions(api_version="v1beta", base_url=self.base_url),
         )
 
     def edit_image(
@@ -107,6 +107,8 @@ class ZenMuxVertexProvider(BaseImageProvider):
                 ),
             )
         except Exception as exc:
+            if "Server disconnected without sending a response" in str(exc):
+                raise ImageProviderError("ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。") from exc
             raise ImageProviderError(f"ZenMux 图片编辑请求失败：{exc}") from exc
 
         return self._extract_imagen_response_image(response)
@@ -144,6 +146,8 @@ class ZenMuxVertexProvider(BaseImageProvider):
                 ),
             )
         except Exception as exc:
+            if "Server disconnected without sending a response" in str(exc):
+                raise ImageProviderError("ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux 图像通道状态。") from exc
             raise ImageProviderError(f"ZenMux Gemini 图片请求失败：{exc}") from exc
 
         return self._extract_gemini_response_image(response)
