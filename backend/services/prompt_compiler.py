@@ -15,6 +15,13 @@ HIGH_QUALITY_TEMPLATE = """
 增强细节：保留商品主体结构和关键识别特征，边缘自然清晰，背景干净但不虚假，色彩准确不过饱和。
 """.strip()
 
+WATERMARK_REMOVAL_TEMPLATE = """
+水印处理要求：
+- 去除原图或生成图中可见的平台水印、文字水印、Logo 标识、AI生成字样、夸克字样和 watermark 字样。
+- 不要在最终图片中新增任何品牌水印、角标、字幕、签名或文字覆盖层。
+- 去除水印时尽量保留商品主体、手部姿势、构图、材质和真实光影。
+""".strip()
+
 
 def compile_generation_prompt(
     *,
@@ -22,6 +29,8 @@ def compile_generation_prompt(
     realistic_mode: bool = False,
     style_template: str | None = None,
     quality: str | None = None,
+    watermark_cleanup_enabled: bool = False,
+    watermark_keywords: list[str] | None = None,
 ) -> str:
     """Compose the user prompt, optional style guide, and ecommerce realism rules."""
     parts: list[str] = []
@@ -33,6 +42,13 @@ def compile_generation_prompt(
     style = (style_template or "").strip()
     if style:
         parts.append(f"参考风格要求：\n{style}")
+
+    if watermark_cleanup_enabled:
+        keyword_text = "、".join(watermark_keywords or [])
+        if keyword_text:
+            parts.append(f"{WATERMARK_REMOVAL_TEMPLATE}\n重点关注这些水印关键词：{keyword_text}。")
+        else:
+            parts.append(WATERMARK_REMOVAL_TEMPLATE)
 
     if realistic_mode:
         parts.append(REALISTIC_ECOMMERCE_TEMPLATE)

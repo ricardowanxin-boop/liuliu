@@ -28,6 +28,7 @@ class GenerationItemResponse(BaseModel):
     status: str
     progress: int = Field(ge=0, le=100)
     resultDataUrl: str | None = None
+    cleanupNote: str | None = None
     error: str | None = None
 
 

@@ -11,8 +11,8 @@ import {
   History,
   ImagePlus,
   Layers3,
-  Library,
   Loader2,
+  Maximize2,
   MoreHorizontal,
   PanelLeft,
   Pencil,
@@ -26,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
-import { apiBaseUrl, createGeneration, getRuntimeConfig } from "./api";
+import { ApiError, apiBaseUrl, createGeneration, getRuntimeConfig } from "./api";
 import type {
   GenerationResponse,
   OutputFormat,
@@ -58,6 +58,8 @@ const providerModels: Record<Provider, string[]> = {
 
 const samplePrompt =
   "一张干净的产品照片：薰衣草紫水晶珠与珍珠点缀的手链，放在透明亚克力托盘上。柔和自然光，白色与浅粉色美学，优雅极简。";
+
+const defaultWatermarkKeywords = "AI生成, 夸克, quark, watermark";
 
 const statusLabel: Record<QueueStatus, string> = {
   queued: "排队中",
@@ -91,6 +93,8 @@ function App() {
   const [quality, setQuality] = useState<Quality>("high");
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("png");
   const [realisticMode, setRealisticMode] = useState(true);
+  const [watermarkCleanupEnabled, setWatermarkCleanupEnabled] = useState(true);
+  const [watermarkKeywords, setWatermarkKeywords] = useState(defaultWatermarkKeywords);
   const [uploads, setUploads] = useState<UploadedImage[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -99,6 +103,7 @@ function App() {
   const [error, setError] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
   const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
+  const [previewResult, setPreviewResult] = useState<ResultItem | null>(null);
   const timersRef = useRef<number[]>([]);
   const uploadsRef = useRef<UploadedImage[]>([]);
 
@@ -143,7 +148,7 @@ function App() {
     };
   }, []);
 
-  const canGenerate = prompt.trim().length > 0 && !isGenerating;
+  const canGenerate = prompt.trim().length > 0 && uploads.length > 0 && !isGenerating;
 
   const characterCount = useMemo(() => prompt.trim().length, [prompt]);
 
@@ -274,6 +279,7 @@ function App() {
           prompt,
           size,
           createdAt: generatedAt,
+          cleanupNote: responseItem?.cleanupNote,
         };
       });
       return [...nextResults, ...current].slice(0, 12);
@@ -288,6 +294,23 @@ function App() {
       return;
     }
     setNotice("生成完成，结果已加入右侧画廊");
+  };
+
+  const failJob = (taskIds: string[], message: string) => {
+    setQueue((current) =>
+      current.map((item) =>
+        taskIds.includes(item.id)
+          ? {
+              ...item,
+              progress: 100,
+              status: "failed",
+            }
+          : item,
+      ),
+    );
+    setIsGenerating(false);
+    setError(message);
+    setNotice("生成失败，请根据错误提示调整后重试");
   };
 
   const advanceJobWhileWaiting = (taskIds: string[]) => {
@@ -312,52 +335,19 @@ function App() {
     });
   };
 
-  const simulateProgress = (
-    jobId: string,
-    taskIds: string[],
-    serverResponse?: GenerationResponse,
-  ) => {
-    const steps = [12, 26, 42, 68, 90, 100];
-    steps.forEach((progress, index) => {
-      const timerId = window.setTimeout(() => {
-        if (progress < 100) {
-          setQueue((current) =>
-            current.map((item) =>
-              taskIds.includes(item.id)
-                ? {
-                    ...item,
-                    progress,
-                    status: getStatus(progress),
-                  }
-                : item,
-            ),
-          );
-        } else {
-          completeJob(jobId, taskIds, serverResponse);
-        }
-      }, 520 * (index + 1));
-      timersRef.current.push(timerId);
-    });
-  };
-
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError("请输入提示词后再生成。");
       return;
     }
 
+    if (uploads.length === 0) {
+      setError("请先上传至少一张参考图，再开始生成。");
+      return;
+    }
+
     const jobId = makeId("job");
-    const sourceUploads = uploads.length > 0 ? uploads : [];
-    const taskSources =
-      sourceUploads.length > 0
-        ? sourceUploads
-        : [
-            {
-              id: "prompt-only",
-              file: new File([], "提示词生成"),
-              url: undefined,
-            } as unknown as UploadedImage,
-          ];
+    const taskSources = uploads;
 
     const taskIds: string[] = [];
     const newTasks: QueueItem[] = taskSources.map((source) => {
@@ -390,11 +380,18 @@ function App() {
         quality,
         outputFormat,
         realisticMode,
+        watermarkCleanupEnabled,
+        watermarkKeywords,
       });
       completeJob(response.jobId || jobId, taskIds, response);
-    } catch {
-      setNotice("后端暂不可用，已切换为本地演示进度");
-      simulateProgress(jobId, taskIds);
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "生成请求失败，请检查后端服务、模型配置或网络。";
+      failJob(taskIds, message);
     }
   };
 
@@ -421,15 +418,17 @@ function App() {
             <span className="nav-title">工作台</span>
             <button className="nav-item active">
               <Sparkles size={18} />
-              生成
+              <span>生成</span>
             </button>
             <button className="nav-item" onClick={() => setNotice("编辑工作台即将开放")}>
               <Pencil size={18} />
-              编辑
+              <span>编辑</span>
+              <span className="nav-badge">即将开放</span>
             </button>
             <button className="nav-item" onClick={() => setNotice("批量工作台即将开放")}>
               <Layers3 size={18} />
-              批量
+              <span>批量</span>
+              <span className="nav-badge">即将开放</span>
             </button>
           </div>
 
@@ -438,7 +437,7 @@ function App() {
             {["产品摄影", "生活方式", "社交媒体", "营销广告"].map((item) => (
               <button className="nav-item compact" key={item} onClick={() => appendHint(item)}>
                 <Files size={17} />
-                {item}
+                <span>{item}</span>
               </button>
             ))}
           </div>
@@ -447,15 +446,18 @@ function App() {
             <span className="nav-title">工具</span>
             <button className="nav-item" onClick={() => setNotice("历史记录即将开放")}>
               <History size={18} />
-              历史记录
+              <span>历史记录</span>
+              <span className="nav-badge">即将开放</span>
             </button>
             <button className="nav-item" onClick={() => setNotice("素材库即将开放")}>
               <FolderOpen size={18} />
-              素材库
+              <span>素材库</span>
+              <span className="nav-badge">即将开放</span>
             </button>
             <button className="nav-item" onClick={() => setNotice("API 文档即将开放")}>
               <BookOpen size={18} />
-              API 文档
+              <span>API 文档</span>
+              <span className="nav-badge">即将开放</span>
             </button>
           </div>
         </nav>
@@ -494,18 +496,19 @@ function App() {
           </div>
         </header>
 
-        <section className="content-grid">
+          <section className="content-grid">
           <section className="generation-panel" aria-label="生成参数">
-            {error ? (
-              <div className="inline-alert" role="alert">
-                {error}
-                <button onClick={() => setError("")} aria-label="关闭错误">
-                  <X size={15} />
-                </button>
-              </div>
-            ) : null}
+            <div className="generation-scroll">
+              {error ? (
+                <div className="inline-alert" role="alert">
+                  {error}
+                  <button onClick={() => setError("")} aria-label="关闭错误">
+                    <X size={15} />
+                  </button>
+                </div>
+              ) : null}
 
-            <div className="panel-block">
+              <div className="panel-block">
               <div className="section-heading">
                 <div>
                   <h2>提示词</h2>
@@ -531,7 +534,7 @@ function App() {
               </div>
             </div>
 
-            <div className="panel-block">
+              <div className="panel-block">
               <div className="section-heading">
                 <div>
                   <h2>参考图</h2>
@@ -558,6 +561,9 @@ function App() {
                 <span>JPG / PNG / WEBP，单张建议 20MB 内</span>
                 <input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={onFileChange} />
               </label>
+              {uploads.length === 0 ? (
+                <p className="field-hint attention">请先上传至少一张参考图，系统会基于参考图做电商场景重绘。</p>
+              ) : null}
 
               {uploads.length > 0 ? (
                 <div className="upload-grid">
@@ -580,7 +586,51 @@ function App() {
               ) : null}
             </div>
 
-            <div className="panel-block">
+              <div className="panel-block">
+              <div className="section-heading">
+                <div>
+                  <h2>出图处理</h2>
+                  <p>去水印与真实电商审美默认开启</p>
+                </div>
+              </div>
+
+              <div className="processing-grid">
+                <label className="switch-control">
+                  <span>
+                    真实电商审美模式
+                    <small>自然光、真实阴影、生活化陈列</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={realisticMode}
+                    onChange={(event) => setRealisticMode(event.target.checked)}
+                  />
+                </label>
+                <label className="switch-control">
+                  <span>
+                    导出前自动去水印
+                    <small>先提示词约束，再做轻量后处理</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={watermarkCleanupEnabled}
+                    onChange={(event) => setWatermarkCleanupEnabled(event.target.checked)}
+                  />
+                </label>
+                <label className="keyword-control">
+                  <span>水印关键词</span>
+                  <input
+                    type="text"
+                    value={watermarkKeywords}
+                    disabled={!watermarkCleanupEnabled}
+                    onChange={(event) => setWatermarkKeywords(event.target.value)}
+                    placeholder="AI生成, 夸克, quark, watermark"
+                  />
+                </label>
+              </div>
+            </div>
+
+              <div className="panel-block">
               <div className="section-heading">
                 <div>
                   <h2>模型参数</h2>
@@ -634,17 +684,7 @@ function App() {
                     <option value="jpg">JPG</option>
                   </select>
                 </label>
-                <label className="switch-control">
-                  <span>
-                    真实电商审美模式
-                    <small>自然光、真实阴影、生活化陈列</small>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={realisticMode}
-                    onChange={(event) => setRealisticMode(event.target.checked)}
-                  />
-                </label>
+              </div>
               </div>
             </div>
 
@@ -667,9 +707,16 @@ function App() {
                 <p>{results.length} 张结果</p>
               </div>
               <div className="view-actions">
-                <button className="icon-button" aria-label="素材库">
-                  <Library size={18} />
-                </button>
+                {results.find((result) => result.imageUrl) ? (
+                  <a
+                    className="secondary-button small"
+                    href={results.find((result) => result.imageUrl)?.imageUrl}
+                    download={`${results.find((result) => result.imageUrl)?.title || "生成结果"}.${outputFormat}`}
+                  >
+                    <Download size={15} />
+                    下载首图
+                  </a>
+                ) : null}
                 <button className="icon-button" aria-label="更多操作">
                   <MoreHorizontal size={18} />
                 </button>
@@ -693,7 +740,7 @@ function App() {
                 <div className="empty-results">
                   <Sparkles size={26} />
                   <strong>生成结果会出现在这里</strong>
-                  <span>右侧保持两列网格，便于对比和下载。</span>
+                  <span>上传商品参考图并点击生成后，可在这里预览、对比和下载结果。</span>
                 </div>
               ) : null}
 
@@ -703,7 +750,13 @@ function App() {
                     <input type="checkbox" />
                   </label>
                   {result.imageUrl ? (
-                    <img src={result.imageUrl} alt={result.title} />
+                    <button
+                      className="result-preview-trigger"
+                      onClick={() => setPreviewResult(result)}
+                      aria-label={`放大预览 ${result.title}`}
+                    >
+                      <img src={result.imageUrl} alt={result.title} />
+                    </button>
                   ) : (
                     <div className="text-result">
                       <Sparkles size={24} />
@@ -713,6 +766,7 @@ function App() {
                   <div className="result-meta">
                     <strong>{result.title}</strong>
                     <span>{result.size.replace("x", " x ")} · {result.createdAt}</span>
+                    {result.cleanupNote ? <small>{result.cleanupNote}</small> : null}
                   </div>
                   <div className="result-actions">
                     <a
@@ -724,8 +778,9 @@ function App() {
                       <Download size={15} />
                       下载
                     </a>
-                    <button onClick={() => setNotice(`已复制 ${result.sourceName} 的提示词`)}>
-                      <MoreHorizontal size={16} />
+                    <button onClick={() => setPreviewResult(result)} disabled={!result.imageUrl}>
+                      <Maximize2 size={15} />
+                      预览
                     </button>
                   </div>
                 </article>
@@ -781,6 +836,34 @@ function App() {
           </div>
         </section>
       </main>
+
+      {previewResult ? (
+        <div className="preview-modal" role="dialog" aria-modal="true" aria-label={`${previewResult.title} 大图预览`}>
+          <button className="preview-backdrop" aria-label="关闭大图预览" onClick={() => setPreviewResult(null)} />
+          <div className="preview-dialog">
+            <div className="preview-header">
+              <div>
+                <strong>{previewResult.title}</strong>
+                <span>{previewResult.size.replace("x", " x ")} · {previewResult.createdAt}</span>
+              </div>
+              <div className="preview-actions">
+                {previewResult.imageUrl ? (
+                  <a href={previewResult.imageUrl} download={`${previewResult.title}.${outputFormat}`}>
+                    <Download size={16} />
+                    下载原图
+                  </a>
+                ) : null}
+                <button onClick={() => setPreviewResult(null)} aria-label="关闭预览">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            {previewResult.imageUrl ? (
+              <img src={previewResult.imageUrl} alt={previewResult.title} />
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

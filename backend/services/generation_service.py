@@ -19,6 +19,8 @@ from backend.services.image_preprocess import (
     build_provider_input_filename,
     image_to_data_url,
     prepare_provider_image_bytes,
+    remove_watermark_if_needed,
+    split_keywords,
 )
 from backend.services.prompt_compiler import compile_generation_prompt
 from backend.services.providers.doubao_seedream import DoubaoSeedreamProvider
@@ -47,6 +49,8 @@ class GenerationOptions:
     output_format: str | None = None
     realistic_mode: bool = False
     style_template: str | None = None
+    watermark_cleanup_enabled: bool = True
+    watermark_keywords: str | None = None
 
 
 def run_generation(
@@ -61,6 +65,8 @@ def run_generation(
         realistic_mode=options.realistic_mode,
         style_template=options.style_template,
         quality=options.quality,
+        watermark_cleanup_enabled=options.watermark_cleanup_enabled,
+        watermark_keywords=split_keywords(options.watermark_keywords),
     )
 
     try:
@@ -93,6 +99,8 @@ def run_generation(
                 file=file,
                 prompt=compiled_prompt,
                 output_format=options.output_format,
+                watermark_cleanup_enabled=options.watermark_cleanup_enabled,
+                watermark_keywords=options.watermark_keywords,
             )
         )
 
@@ -143,6 +151,8 @@ def _process_single_file(
     file: UploadedImagePayload,
     prompt: str,
     output_format: str | None,
+    watermark_cleanup_enabled: bool,
+    watermark_keywords: str | None,
 ) -> GenerationItemResponse:
     try:
         provider_bytes = prepare_provider_image_bytes(file.content)
@@ -152,11 +162,18 @@ def _process_single_file(
             prompt=prompt,
             filename=provider_filename,
         )
+        cleanup_note = ""
+        if watermark_cleanup_enabled:
+            generated_image, cleanup_note = remove_watermark_if_needed(
+                generated_image,
+                keywords=split_keywords(watermark_keywords),
+            )
         return GenerationItemResponse(
             sourceName=file.source_name,
             status="done",
             progress=100,
             resultDataUrl=image_to_data_url(generated_image, output_format or "png"),
+            cleanupNote=cleanup_note or None,
         )
     except (ImagePreprocessError, ImageProviderError) as exc:
         return GenerationItemResponse(

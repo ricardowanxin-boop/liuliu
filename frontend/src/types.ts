@@ -20,6 +20,8 @@ export interface GenerationRequest {
   quality: Quality;
   outputFormat: OutputFormat;
   realisticMode: boolean;
+  watermarkCleanupEnabled: boolean;
+  watermarkKeywords: string;
 }
 
 export interface GenerationResponseItem {
@@ -28,6 +30,7 @@ export interface GenerationResponseItem {
   progress?: number;
   resultUrl?: string;
   resultDataUrl?: string;
+  cleanupNote?: string;
   error?: string;
 }
 
@@ -71,4 +74,5 @@ export interface ResultItem {
   prompt: string;
   size: string;
   createdAt: string;
+  cleanupNote?: string;
 }
