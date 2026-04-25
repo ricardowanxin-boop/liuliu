@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+ROOT_DIR="$(pwd)"
+export PYTHONPATH="$ROOT_DIR/third_party:$ROOT_DIR:$PYTHONPATH"
+
+PYTHON_BIN=""
+for candidate in \
+  /var/lang/python311/bin/python3.11 \
+  /var/lang/python3.11/bin/python3.11 \
+  /var/lang/python3/bin/python3.11 \
+  python3.11 \
+  /var/lang/python310/bin/python3.10 \
+  /var/lang/python3.10/bin/python3.10 \
+  python3.10
+do
+  if command -v "$candidate" >/dev/null 2>&1; then
+    PYTHON_BIN="$candidate"
+    break
+  fi
+done
+
+if [ -z "$PYTHON_BIN" ]; then
+  echo "No compatible Python 3.10+ interpreter found for image-workshop-api" >&2
+  exit 127
+fi
+
+echo "Using Python interpreter: $PYTHON_BIN"
+"$PYTHON_BIN" - <<'PY'
+import sys
+print("Python runtime:", sys.version.replace("\n", " "), flush=True)
+PY
+
+exec "$PYTHON_BIN" app.py

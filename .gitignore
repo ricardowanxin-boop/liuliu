@@ -12,6 +12,7 @@ env/
 node_modules/
 dist/
 build/
+.cloudbase-build/
 
 .env
 .env.*
