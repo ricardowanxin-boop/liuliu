@@ -23,6 +23,7 @@ from backend.services.image_preprocess import (
     remove_watermark_if_needed,
     split_keywords,
 )
+from backend.services.hand_anatomy import build_source_hand_anatomy_prompt
 from backend.services.iteration_logger import (
     IterationLogResult,
     write_generation_failure_log,
@@ -34,7 +35,13 @@ from backend.services.quality_control import (
     DEFAULT_QUALITY_THRESHOLD,
     build_quality_retry_prompt,
     evaluate_generated_image,
+    has_hard_quality_blocker,
 )
+from backend.services.subject_fidelity import (
+    build_subject_fidelity_prompt,
+    enhance_subject_non_generative,
+)
+from backend.services.texture_preservation import preserve_real_scene_texture
 from backend.services.providers.doubao_seedream import DoubaoSeedreamProvider
 from backend.services.providers.openai_compatible import OpenAICompatibleProvider
 from backend.services.providers.provider_base import BaseImageProvider, ImageProviderError
@@ -74,6 +81,8 @@ class GenerationOptions:
     quality_control_enabled: bool = True
     quality_threshold: int = DEFAULT_QUALITY_THRESHOLD
     quality_max_retries: int = DEFAULT_MAX_RETRIES
+    subject_guard_enabled: bool = True
+    texture_preservation_enabled: bool = True
 
 
 def run_generation(
@@ -90,6 +99,7 @@ def run_generation(
         quality=options.quality,
         watermark_cleanup_enabled=options.watermark_cleanup_enabled,
         watermark_keywords=split_keywords(options.watermark_keywords),
+        texture_preservation_enabled=options.texture_preservation_enabled,
     )
 
     try:
@@ -133,6 +143,8 @@ def run_generation(
             quality_control_enabled=options.quality_control_enabled,
             quality_threshold=options.quality_threshold,
             quality_max_retries=options.quality_max_retries,
+            subject_guard_enabled=options.subject_guard_enabled,
+            texture_preservation_enabled=options.texture_preservation_enabled,
         )
         items.append(process_result.item)
         provider_call_count += process_result.provider_call_count
@@ -196,6 +208,8 @@ def _process_single_file(
     quality_control_enabled: bool,
     quality_threshold: int,
     quality_max_retries: int,
+    subject_guard_enabled: bool,
+    texture_preservation_enabled: bool,
 ) -> ProcessFileResult:
     retry_count = 0
     final_assessment = None
@@ -212,9 +226,15 @@ def _process_single_file(
     try:
         provider_bytes = prepare_provider_image_bytes(file.content)
         provider_filename = build_provider_input_filename(file.source_name, provider_bytes)
-        source_image_for_quality = None
-        if quality_control_enabled:
-            source_image_for_quality = load_image_from_bytes(file.content)
+        source_image = load_image_from_bytes(file.content)
+        effective_quality_gate = quality_control_enabled or subject_guard_enabled or texture_preservation_enabled
+        source_image_for_quality = source_image if effective_quality_gate else None
+        hand_anatomy_prompt = build_source_hand_anatomy_prompt(source_image, prompt=compiled_prompt)
+        if hand_anatomy_prompt:
+            current_prompt = "\n\n".join([compiled_prompt, hand_anatomy_prompt]).strip()
+        if subject_guard_enabled:
+            current_prompt = "\n\n".join([current_prompt, build_subject_fidelity_prompt()]).strip()
+        base_generation_prompt = current_prompt
 
         while True:
             provider_call_count += 1
@@ -229,8 +249,26 @@ def _process_single_file(
                     generated_image,
                     keywords=split_keywords(watermark_keywords),
                 )
+            if subject_guard_enabled:
+                enhancement_result = enhance_subject_non_generative(
+                    generated_image,
+                    source_image=source_image,
+                )
+                generated_image = enhancement_result.image
+                cleanup_note = "；".join(
+                    item for item in (cleanup_note, enhancement_result.note) if item
+                )
+            if texture_preservation_enabled:
+                texture_result = preserve_real_scene_texture(
+                    generated_image,
+                    source_image=source_image,
+                )
+                generated_image = texture_result.image
+                cleanup_note = "；".join(
+                    item for item in (cleanup_note, texture_result.note) if item
+                )
 
-            if not quality_control_enabled:
+            if not effective_quality_gate:
                 log_result = write_generation_iteration_log(
                     source_name=file.source_name,
                     source_image_bytes=file.content,
@@ -272,10 +310,13 @@ def _process_single_file(
                 generated_image,
                 threshold=threshold,
                 source_image=source_image_for_quality,
+                prompt=current_prompt,
+                subject_guard_enabled=subject_guard_enabled,
+                texture_preservation_enabled=texture_preservation_enabled,
             )
-            status = "done" if final_assessment.passed else "quality_failed_retrying"
-            if not final_assessment.passed and retry_count >= max_retries:
-                status = "failed"
+            hard_blocker = has_hard_quality_blocker(final_assessment)
+            will_retry = not final_assessment.passed and retry_count < max_retries and not hard_blocker
+            status = "done" if final_assessment.passed else "quality_failed_retrying" if will_retry else "review_required"
             log_result = write_generation_iteration_log(
                 source_name=file.source_name,
                 source_image_bytes=file.content,
@@ -288,7 +329,7 @@ def _process_single_file(
                 status=status,
                 assessment=final_assessment,
                 cleanup_note=cleanup_note or None,
-                error=None if final_assessment.passed else "自动质检未通过",
+                error=None if final_assessment.passed else "自动质检需复核" if not will_retry else "自动质检未通过",
                 job_id=job_id,
                 file_index=file_index,
             )
@@ -319,12 +360,13 @@ def _process_single_file(
                     provider_call_count=provider_call_count,
                 )
 
-            if retry_count >= max_retries:
+            if not will_retry:
                 return ProcessFileResult(
                     item=GenerationItemResponse(
                         sourceName=file.source_name,
-                        status="failed",
+                        status="review_required",
                         progress=100,
+                        resultDataUrl=image_to_data_url(generated_image, output_format or "png"),
                         cleanupNote=cleanup_note or None,
                         qualityScore=final_assessment.score,
                         qualityPassed=False,
@@ -336,13 +378,13 @@ def _process_single_file(
                         stageSummaryPath=last_stage_summary_path,
                         switchReviewPath=last_switch_review_path,
                         switchWarning=last_switch_warning,
-                        error=f"自动质检未通过（{final_assessment.score}分）：{'；'.join(final_assessment.reasons)}",
+                        error="自动质检未通过，结果仅供参考，不建议直接交付。",
                     ),
                     provider_call_count=provider_call_count,
                 )
 
             retry_count += 1
-            current_prompt = build_quality_retry_prompt(compiled_prompt, final_assessment)
+            current_prompt = build_quality_retry_prompt(base_generation_prompt, final_assessment)
 
     except (ImagePreprocessError, ImageProviderError) as exc:
         failure_log = _try_write_failure_log(
@@ -454,9 +496,12 @@ def _summarize_job_status(items: list[GenerationItemResponse]) -> str:
     if not items:
         return "failed"
     done_count = sum(1 for item in items if item.status == "done")
+    deliverable_count = sum(1 for item in items if item.resultDataUrl)
     if done_count == len(items):
         return "completed"
-    if done_count == 0:
+    if deliverable_count == len(items):
+        return "review_required"
+    if deliverable_count == 0:
         return "failed"
     return "partial"
 

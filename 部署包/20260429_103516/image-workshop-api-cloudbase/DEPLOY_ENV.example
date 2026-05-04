@@ -1,0 +1,13 @@
+DEFAULT_PROVIDER=zenmux
+ALLOWED_ORIGINS=*
+
+ZENMUX_API_KEY=填你的 ZenMux API Key
+ZENMUX_BASE_URL=https://zenmux.ai/api/vertex-ai
+ZENMUX_IMAGE_MODEL=bytedance/doubao-seedream-5.0-lite
+
+ARK_API_KEY=填你的火山/豆包 API Key
+ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
+DOUBAO_IMAGE_MODEL=doubao-seedream-5-0-260128
+
+# 可选：如果网关路径不是直接 /api，而是带固定前缀，可填写
+# SCF_PATH_PREFIX=/api/image-workshop

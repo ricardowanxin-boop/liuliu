@@ -1,5 +1,5 @@
 {
-  "next_iteration": 13,
+  "next_iteration": 32,
   "records": [
     {
       "iteration": 1,
@@ -232,6 +232,415 @@
       "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0012_20260425_215231_原图/原图.png",
       "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0012_20260425_215231_原图/结果.png",
       "switch_warning": null
+    },
+    {
+      "iteration": 13,
+      "created_at": "2026-04-26 00:20:40",
+      "job_id": "job_20260425161839_4d1bebbd",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0013_20260426_002040_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0013_20260426_002040_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": null
+    },
+    {
+      "iteration": 14,
+      "created_at": "2026-04-26 00:21:08",
+      "job_id": "job_20260425162041_d5adabf6",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-4-5-251128",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": 40,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
+        "MediaPipe 手部关键点相对结构变化过大（1.13），可能出现手势翻转、指尖方向错误或美甲贴钻位置穿帮",
+        "结果图指尖掌心侧疑似新增异常高亮贴钻痕迹（66.5），可能把钻画到了指甲内侧"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0014_20260426_002108_原图/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0014_20260426_002108_原图/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0014_20260426_002108_原图/结果.png",
+      "switch_warning": null
+    },
+    {
+      "iteration": 15,
+      "created_at": "2026-04-26 10:03:23",
+      "job_id": "job_20260426020123_44ef6d75",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "done",
+      "quality_score": 74,
+      "quality_passed": true,
+      "quality_reasons": [
+        "MediaPipe 未能在结果图中稳定识别手部 21 个关键点，手型、指甲朝向或贴钻位置可能已经不符合真实人体结构"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0015_20260426_100323_原图/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0015_20260426_100323_原图/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0015_20260426_100323_原图/结果.png",
+      "switch_warning": null
+    },
+    {
+      "iteration": 16,
+      "created_at": "2026-04-26 10:05:26",
+      "job_id": "job_20260426020325_95d718aa",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0016_20260426_100526_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0016_20260426_100526_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": null
+    },
+    {
+      "iteration": 17,
+      "created_at": "2026-04-26 17:04:11",
+      "job_id": "local_fake_copyback_test",
+      "file_index": 1,
+      "source_name": "本地假模型测试.png",
+      "provider_type": "fake_local",
+      "model": "fake-history-result",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": 32,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
+        "商品/手部主体结构相对原图变化过大（边缘召回 0.16，边缘重合 0.12），可能出现商品形状、链条走向、吊坠轮廓或持物关系被改坏",
+        "商品主体高频细节低于原图（主体边缘能量比 0.51），链条、镶边小钻、宝石或吊坠边缘可能变糊",
+        "P0 硬失败：商品主体结构、颜色或关键细节相对原图漂移，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0017_20260426_170411_本地假模型测试/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0017_20260426_170411_本地假模型测试/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0017_20260426_170411_本地假模型测试/结果.png",
+      "switch_warning": null
+    },
+    {
+      "iteration": 18,
+      "created_at": "2026-04-26 17:14:44",
+      "job_id": "job_20260426091243_1a47a421",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0018_20260426_171444_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0018_20260426_171444_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": null
+    },
+    {
+      "iteration": 19,
+      "created_at": "2026-04-26 17:24:47",
+      "job_id": "job_20260426092334_90a5d288",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0019_20260426_172447_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0019_20260426_172447_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": null
+    },
+    {
+      "iteration": 20,
+      "created_at": "2026-04-26 19:06:17",
+      "job_id": "job_20260426110526_c4ac88be",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "openai/gpt-image-2",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux 图片编辑请求失败：500 None. {'error': {'code': '500', 'type': 'internal_server_error', 'message': 'Resource not found'}}"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0020_20260426_190617_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0020_20260426_190617_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 21,
+      "created_at": "2026-04-26 19:43:12",
+      "job_id": "job_20260426114259_71abcd05",
+      "file_index": 1,
+      "source_name": "原图.jpg",
+      "provider_type": "zenmux",
+      "model": "google/gemini-2.5-flash-image",
+      "attempt": 1,
+      "status": "failed",
+      "quality_score": null,
+      "quality_passed": false,
+      "quality_reasons": [
+        "ZenMux Gemini 服务返回成功，但未包含图片结果。"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0021_20260426_194312_原图_failed/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0021_20260426_194312_原图_failed/原图.png",
+      "result_path": null,
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 22,
+      "created_at": "2026-04-26 21:30:52",
+      "job_id": "job_20260426133010_546ca852",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-4-5-251128",
+      "attempt": 1,
+      "status": "quality_failed_retrying",
+      "quality_score": 56,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图桌面/背景纹理下降，真实微纹理被抹平",
+        "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
+        "相对原图全局边缘细节下降，存在整体降噪或柔化倾向"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0022_20260426_213052_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0022_20260426_213052_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0022_20260426_213052_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 23,
+      "created_at": "2026-04-26 21:31:28",
+      "job_id": "job_20260426133010_546ca852",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-4-5-251128",
+      "attempt": 2,
+      "status": "failed",
+      "quality_score": 10,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图桌面/背景纹理下降，真实微纹理被抹平",
+        "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
+        "相对原图全局边缘细节下降，存在整体降噪或柔化倾向",
+        "MediaPipe 检测到手掌屏幕拓扑方向疑似翻转，手心/手背逻辑可能被画反",
+        "结果图指尖掌心侧疑似新增异常高亮贴钻痕迹（11.0），可能把钻画到了指甲内侧",
+        "P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0023_20260426_213128_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0023_20260426_213128_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0023_20260426_213128_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 24,
+      "created_at": "2026-04-26 22:03:47",
+      "job_id": "job_20260426140301_339fb1bc",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-5-0-260128",
+      "attempt": 1,
+      "status": "quality_failed_retrying",
+      "quality_score": 46,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图饱和度提升过大，容易像 AI 广告图",
+        "MediaPipe 检测到手掌屏幕拓扑方向疑似翻转，手心/手背逻辑可能被画反",
+        "结果图指尖掌心侧疑似新增异常高亮贴钻痕迹（25.0），可能把钻画到了指甲内侧",
+        "P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0024_20260426_220347_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0024_20260426_220347_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0024_20260426_220347_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 25,
+      "created_at": "2026-04-26 22:04:29",
+      "job_id": "job_20260426140301_339fb1bc",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-5-0-260128",
+      "attempt": 2,
+      "status": "failed",
+      "quality_score": 71,
+      "quality_passed": false,
+      "quality_reasons": [
+        "MediaPipe 未能在结果图中稳定识别手部 21 个关键点，手型、指甲朝向或贴钻位置可能已经不符合真实人体结构",
+        "P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0025_20260426_220429_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0025_20260426_220429_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0025_20260426_220429_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 26,
+      "created_at": "2026-04-26 22:05:08",
+      "job_id": "job_20260426140432_766c349c",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-5-0-260128",
+      "attempt": 1,
+      "status": "quality_failed_retrying",
+      "quality_score": 66,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图饱和度提升过大，容易像 AI 广告图",
+        "MediaPipe 未能在结果图中稳定识别手部 21 个关键点，手型、指甲朝向或贴钻位置可能已经不符合真实人体结构",
+        "P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0026_20260426_220508_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0026_20260426_220508_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0026_20260426_220508_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 27,
+      "created_at": "2026-04-26 22:05:51",
+      "job_id": "job_20260426140432_766c349c",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-5-0-260128",
+      "attempt": 2,
+      "status": "failed",
+      "quality_score": 66,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图饱和度提升过大，容易像 AI 广告图",
+        "MediaPipe 未能在结果图中稳定识别手部 21 个关键点，手型、指甲朝向或贴钻位置可能已经不符合真实人体结构",
+        "P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0027_20260426_220551_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0027_20260426_220551_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0027_20260426_220551_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 28,
+      "created_at": "2026-04-28 01:05:27",
+      "job_id": "job_20260427170437_50895b05",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "zenmux",
+      "model": "bytedance/doubao-seedream-5.0-lite",
+      "attempt": 1,
+      "status": "done",
+      "quality_score": 82,
+      "quality_passed": true,
+      "quality_reasons": [
+        "相对原图饱和度提升过大，容易像 AI 广告图",
+        "原图手部未能被 MediaPipe 稳定识别，涉及美甲/手部改造的结果需要人工复核"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0028_20260428_010527_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0028_20260428_010527_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0028_20260428_010527_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": null
+    },
+    {
+      "iteration": 29,
+      "created_at": "2026-04-30 10:19:13",
+      "job_id": "job_20260430021845_558da35b",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "zenmux",
+      "model": "sapiens-ai/agnes-image-1.2",
+      "attempt": 1,
+      "status": "review_required",
+      "quality_score": 36,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
+        "结果尺寸明显小于原图，交付清晰度有损失",
+        "原图手部未能被 MediaPipe 稳定识别，涉及美甲/手部改造的结果需要人工复核",
+        "商品/手部主体结构相对原图变化过大（边缘召回 0.22，边缘重合 0.13），可能出现商品形状、链条走向、吊坠轮廓或持物关系被改坏",
+        "P0 硬失败：商品主体结构、颜色或关键细节相对原图漂移，不允许作为可交付结果"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0029_20260430_101913_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0029_20260430_101913_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0029_20260430_101913_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 30,
+      "created_at": "2026-04-30 10:20:16",
+      "job_id": "job_20260430021948_0d91fc26",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-4-5-251128",
+      "attempt": 1,
+      "status": "quality_failed_retrying",
+      "quality_score": 68,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图桌面/背景纹理下降，真实微纹理被抹平",
+        "相对原图饱和度提升过大，容易像 AI 广告图",
+        "原图手部未能被 MediaPipe 稳定识别，涉及美甲/手部改造的结果需要人工复核"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0030_20260430_102016_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0030_20260430_102016_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0030_20260430_102016_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
+    },
+    {
+      "iteration": 31,
+      "created_at": "2026-04-30 10:20:48",
+      "job_id": "job_20260430021948_0d91fc26",
+      "file_index": 1,
+      "source_name": "cdcca1e119e940e26c45589b491489b1.jpg",
+      "provider_type": "doubao",
+      "model": "doubao-seedream-4-5-251128",
+      "attempt": 2,
+      "status": "review_required",
+      "quality_score": 64,
+      "quality_passed": false,
+      "quality_reasons": [
+        "相对原图桌面/背景纹理下降，真实微纹理被抹平",
+        "原图手部未能被 MediaPipe 稳定识别，涉及美甲/手部改造的结果需要人工复核",
+        "商品主体亮度相对原图偏移过大（-63.6），可能过曝、变暗或材质层次丢失"
+      ],
+      "log_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0031_20260430_102048_cdcca1e119e940e26c45589b491489b1/记录.md",
+      "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0031_20260430_102048_cdcca1e119e940e26c45589b491489b1/原图.png",
+      "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0031_20260430_102048_cdcca1e119e940e26c45589b491489b1/结果.png",
+      "switch_warning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。"
     }
   ]
 }

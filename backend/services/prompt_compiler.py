@@ -33,6 +33,8 @@ REAL_PHOTO_FIDELITY_TEMPLATE = """
 - 首要目标是“商品更可卖”，不是“画面更干净”：链条、吊坠、珠子、金属镶边、珍珠和主体轮廓清晰度必须优先于背景美化。
 - 商品主体在画面中的面积、清晰度和视觉权重不能变小；不要让花、杯子、托盘、桌面纹理或背景装饰抢过商品。
 - 吊坠、链条和镶边钻位必须比原图更清楚：金属边缘有细小高光，链节独立可辨，宝石/珍珠有层次，不要变成一团亮片。
+- 原图里的项链/吊坠/珠宝是交付主体，不允许更换为新的商品，不允许改变吊坠位置、链条走向、挂坠比例、金属镶边和宝石轮廓。
+- 允许优化背景和桌面，但只允许做局部、轻量、真实照片级修饰；不要因为换背景而重画手、商品、袖口和首饰结构。
 """.strip()
 
 NAIL_ANATOMY_TEMPLATE = """
@@ -44,6 +46,16 @@ NAIL_ANATOMY_TEMPLATE = """
 - 每根手指的透明带钻甲样式要一致，但钻的位置必须跟随真实甲面弧度和透视，贴在外甲面，不要漂浮、穿帮或反向贴钻。
 - 如果因为手心朝上导致外侧甲面不可见或只露出边缘，宁可让贴钻可见度降低，也不要把钻移动到掌心侧来“展示”。
 - 保持原图手势和手指朝向，不要为了展示美甲而翻转手掌、旋转手指、改变关节结构或生成不符合人体结构的指甲。
+- 这张图如果是掌心面向镜头，不要把美甲改造成手背朝上视角；不要新增弯曲手指、握拳姿态或把手掌重构成另一张手部照片。
+- 掌心侧是禁区：掌纹、指腹、手掌肉面和甲片内侧不能出现水钻、亮片、星点或金属装饰；这些装饰只能在真实可见的外甲面边缘少量出现。
+- 美甲需求服从人体结构：当透明甲外表面不可见时，保持透明甲和自然高光即可，不要为了“展示钻”牺牲手心朝上的真实姿态。
+""".strip()
+
+SUBJECT_LOCK_TEMPLATE = """
+商品主体锁定规则：
+- 项链、吊坠、链条、金属镶边、珍珠/宝石、手部持物关系必须保留原图结构；不得重绘成另一件饰品。
+- 去水印和换背景不能损伤商品边缘；商品区域应比背景更清楚，链节、镶边小钻和吊坠轮廓要可辨。
+- 只在不破坏商品的前提下提升质感：增强金属高光、宝石通透度和吊坠清晰度，避免把主体磨成柔焦或糊成亮片团。
 """.strip()
 
 NAIL_ANATOMY_KEYWORDS = (
@@ -71,6 +83,14 @@ WATERMARK_REMOVAL_TEMPLATE = """
 - 去除水印时尽量保留商品主体、手部姿势、构图、材质和真实光影。
 """.strip()
 
+TEXTURE_PRESERVATION_TEMPLATE = """
+真实纹理保护规则：
+- 不要把书页文字、桌面木纹、布料纤维、皮肤纹理、甲面小反光、透明托盘边缘、自然噪点和使用痕迹当作脏点抹掉。
+- 背景可以整理，但不能被虚化成纯色块；保留真实拍摄里的微纹理、局部不完美、自然反光过渡和接触阴影。
+- 如果换背景，新背景也必须有真实材质颗粒、轻微噪点、方向性光源、真实阴影和不完全均匀的现场质感。
+- 禁止全局降噪、全局磨皮、背景涂抹、纸张文字一团糊、桌面像塑料板；真实感优先于“干净高级感”。
+""".strip()
+
 
 def compile_generation_prompt(
     *,
@@ -80,6 +100,7 @@ def compile_generation_prompt(
     quality: str | None = None,
     watermark_cleanup_enabled: bool = False,
     watermark_keywords: list[str] | None = None,
+    texture_preservation_enabled: bool = True,
 ) -> str:
     """Compose the user prompt, optional style guide, and ecommerce realism rules."""
     parts: list[str] = []
@@ -99,9 +120,13 @@ def compile_generation_prompt(
         else:
             parts.append(WATERMARK_REMOVAL_TEMPLATE)
 
+    if texture_preservation_enabled:
+        parts.append(TEXTURE_PRESERVATION_TEMPLATE)
+
     if realistic_mode:
         parts.append(ANTI_AI_STUDIO_TEMPLATE)
         parts.append(REAL_PHOTO_FIDELITY_TEMPLATE)
+        parts.append(SUBJECT_LOCK_TEMPLATE)
         if _needs_nail_anatomy_lock(user_prompt, style):
             parts.append(NAIL_ANATOMY_TEMPLATE)
         parts.append(REALISTIC_ECOMMERCE_TEMPLATE)

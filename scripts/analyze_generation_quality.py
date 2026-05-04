@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime
@@ -23,6 +24,7 @@ from backend.services.quality_control import evaluate_generated_image
 DEFAULT_RESULTS_DIR = PROJECT_ROOT / "日志" / "测试结果"
 LOG_DIR = PROJECT_ROOT / "日志" / "质量错误分析日志"
 DATABASE_PATH = LOG_DIR / "quality_error_knowledge_base.json"
+DEFAULT_PROMPT = "去掉水印，更换背景，ins风，可以改变桌子颜色\n指甲改成通明带钻，全部一样的指甲样式，衣袖也全部更改，换成一样的样式"
 
 
 SEVERITY_LEVELS = {
@@ -44,6 +46,7 @@ class ImagePair:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR)
+    parser.add_argument("--prompt", default=DEFAULT_PROMPT)
     parser.add_argument(
         "--known-issue",
         action="append",
@@ -58,7 +61,7 @@ def main() -> None:
 
     report_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_path = LOG_DIR / f"质量错误分析_{report_time}.md"
-    issues = analyze_pairs(pairs=pairs, known_issues=parse_known_issues(args.known_issue))
+    issues = analyze_pairs(pairs=pairs, known_issues=parse_known_issues(args.known_issue), prompt=args.prompt)
 
     update_database(database=database, issues=issues)
     DATABASE_PATH.write_text(json.dumps(database, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -75,29 +78,24 @@ def main() -> None:
 def find_pairs(results_dir: Path) -> list[ImagePair]:
     pairs: list[ImagePair] = []
     for source_path in sorted(results_dir.glob("原图*_*.png")):
-        sequence = parse_sequence(source_path.name, "原图")
-        if sequence is None:
+        parsed = parse_filename(source_path.name, "原图")
+        if parsed is None:
             continue
-        result_candidates = sorted(results_dir.glob(f"结果{sequence}_*.png"))
-        if not result_candidates:
+        sequence, suffix = parsed
+        result_path = results_dir / f"结果{sequence}_{suffix}.png"
+        if not result_path.exists():
             continue
-        result_path = result_candidates[-1]
         label = "GPT" if "GPT" in result_path.name else "Doubao" if "Doubao" in result_path.name else "unknown"
         pairs.append(ImagePair(sequence=sequence, source_path=source_path, result_path=result_path, label=label))
     return pairs
 
 
-def parse_sequence(filename: str, prefix: str) -> int | None:
-    if not filename.startswith(prefix):
+def parse_filename(filename: str, prefix: str) -> tuple[int, str] | None:
+    pattern = rf"^{re.escape(prefix)}(\d+)_(.+)\.png$"
+    match = re.match(pattern, filename)
+    if not match:
         return None
-    digits = []
-    for char in filename[len(prefix):]:
-        if not char.isdigit():
-            break
-        digits.append(char)
-    if not digits:
-        return None
-    return int("".join(digits))
+    return int(match.group(1)), match.group(2)
 
 
 def parse_known_issues(raw_items: list[str]) -> dict[str, set[int] | None]:
@@ -121,12 +119,12 @@ def parse_known_issues(raw_items: list[str]) -> dict[str, set[int] | None]:
     return parsed
 
 
-def analyze_pairs(*, pairs: list[ImagePair], known_issues: dict[str, set[int] | None]) -> list[dict[str, Any]]:
+def analyze_pairs(*, pairs: list[ImagePair], known_issues: dict[str, set[int] | None], prompt: str | None) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     for pair in pairs:
         source_image = Image.open(pair.source_path)
         result_image = Image.open(pair.result_path)
-        assessment = evaluate_generated_image(result_image, source_image=source_image, threshold=72)
+        assessment = evaluate_generated_image(result_image, source_image=source_image, threshold=72, prompt=prompt)
 
         for reason in assessment.reasons:
             severity = classify_reason(reason)
@@ -172,7 +170,9 @@ def analyze_pairs(*, pairs: list[ImagePair], known_issues: dict[str, set[int] | 
 
 
 def classify_reason(reason: str) -> str:
-    if any(keyword in reason for keyword in ("人体", "手心", "指甲内侧", "掌心侧", "结构")):
+    if "原图手部未能被 MediaPipe 稳定识别" in reason:
+        return "P2"
+    if any(keyword in reason for keyword in ("人体", "手心", "指甲内侧", "掌心侧", "结构", "MediaPipe 未能在结果图", "手部关键点", "手势翻转", "贴钻痕迹")):
         return "P0"
     if any(keyword in reason for keyword in ("商品主体", "链条", "吊坠", "金属", "珠宝", "水印")):
         return "P1"
@@ -182,6 +182,12 @@ def classify_reason(reason: str) -> str:
 
 
 def stable_issue_id(reason: str) -> str:
+    if "商品/手部主体结构" in reason:
+        return "subject_structure_drift"
+    if "商品主体颜色" in reason:
+        return "subject_color_drift"
+    if "商品主体高频细节" in reason:
+        return "subject_high_frequency_detail_loss"
     if "商品主体" in reason or "链条" in reason or "吊坠" in reason:
         return "product_subject_detail_loss"
     if "纹理" in reason or "微纹理" in reason:
@@ -190,10 +196,22 @@ def stable_issue_id(reason: str) -> str:
         return "global_detail_softening"
     if "尺寸" in reason:
         return "output_resolution_loss"
+    if "原图手部未能被 MediaPipe 稳定识别" in reason:
+        return "source_hand_landmark_low_confidence"
+    if "MediaPipe" in reason or "手部关键点" in reason:
+        return "hand_anatomy_landmark_failure"
+    if "掌心侧" in reason or "贴钻痕迹" in reason or "指甲内侧" in reason:
+        return "nail_inner_side_artifact"
     return "misc_quality_issue"
 
 
 def root_cause_for_reason(reason: str) -> str:
+    if "商品/手部主体结构" in reason:
+        return "整体图生图会把商品、手部和背景一起重绘，缺少商品主体 mask 保护，导致主体结构漂移。"
+    if "商品主体颜色" in reason:
+        return "模型为了统一风格或换背景，会同步改动商品主色和材质色，缺少主体颜色锁定。"
+    if "商品主体高频细节" in reason:
+        return "模型在生成过程中对商品主体做了降噪或柔化，链条、镶边、宝石等高频细节被抹掉。"
     if "商品主体" in reason:
         return "模型优先优化整体画面氛围，商品局部高频细节没有被作为第一优化目标。"
     if "纹理" in reason:
@@ -202,10 +220,22 @@ def root_cause_for_reason(reason: str) -> str:
         return "模型生成过程带来整体柔化或降噪，导致真实拍摄边缘和材质细节下降。"
     if "尺寸" in reason:
         return "输出尺寸或裁切策略导致结果低于原图交付清晰度。"
+    if "原图手部未能被 MediaPipe 稳定识别" in reason:
+        return "原图可能存在遮挡、透视角度或低对比度，导致本地手部关键点不能稳定作为几何基准；这属于质检信心不足，不等同于结果图已经画错。"
+    if "MediaPipe" in reason or "手部关键点" in reason:
+        return "结果图的手部几何结构未通过本地关键点检测，可能是模型把手心/手背、指腹/甲面、指尖方向画混了。"
+    if "掌心侧" in reason or "贴钻痕迹" in reason or "指甲内侧" in reason:
+        return "结果图在指尖掌心侧区域新增了不应出现的高亮装饰，说明模型仍把可见甲尖或掌侧边缘误判成可贴钻甲面。"
     return "需要人工复盘确认。"
 
 
 def fix_strategy_for_reason(reason: str) -> str:
+    if "商品/手部主体结构" in reason:
+        return "短期用主体相似度硬门禁阻断，后续引入商品 mask/局部编辑，只允许背景变化，不允许主体结构漂移。"
+    if "商品主体颜色" in reason:
+        return "加入商品区域颜色直方图/色差门禁；换背景时保留商品原始颜色和材质，不允许整体改色。"
+    if "商品主体高频细节" in reason:
+        return "用主体局部锐化和边缘能量门禁保护链条、镶边和宝石细节；低于原图直接重试或拒绝。"
     if "商品主体" in reason:
         return "提示词和质检中提高商品主体权重：链条、吊坠、金属高光、珠宝边缘必须优先于背景美化。"
     if "纹理" in reason:
@@ -214,6 +244,12 @@ def fix_strategy_for_reason(reason: str) -> str:
         return "增加原图参照质检，低于原图边缘细节阈值时自动重试或拒绝交付。"
     if "尺寸" in reason:
         return "提高输出尺寸策略，避免主体缩小和结果尺寸明显低于原图。"
+    if "原图手部未能被 MediaPipe 稳定识别" in reason:
+        return "降低自动判死力度：标记为人工复核风险，同时继续用商品主体和掌心侧亮点差分做硬质检。"
+    if "MediaPipe" in reason or "手部关键点" in reason:
+        return "生成前注入 MediaPipe 手部拓扑约束；生成后若手部关键点缺失、拓扑翻转或掌心侧疑似新增贴钻，则直接按 P0 阻断交付。"
+    if "掌心侧" in reason or "贴钻痕迹" in reason or "指甲内侧" in reason:
+        return "在提示词中继续强化掌心侧禁区约束，并把掌心侧亮点差分检测纳入 P0 规则；一旦触发直接拒绝交付。"
     return "进入人工错题集，补充专门约束。"
 
 

@@ -434,7 +434,8 @@ button {
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px 16px 22px;
+  scrollbar-gutter: stable;
 }
 
 .result-panel {
@@ -448,13 +449,16 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  min-height: 40px;
+  min-height: 34px;
+  max-height: 76px;
+  overflow: auto;
   padding: 9px 10px 9px 12px;
   border: 1px solid #ffd6d6;
   border-radius: var(--radius);
   background: #fff5f5;
   color: #aa2020;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .inline-alert button {
@@ -717,6 +721,26 @@ select {
   box-shadow: 0 0 0 3px rgba(47, 125, 70, 0.12);
 }
 
+.model-warning {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #f0dfbd;
+  border-radius: var(--radius);
+  background: #fff9ec;
+  color: #7b5b16;
+}
+
+.model-warning strong {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.model-warning span {
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .switch-control {
   grid-column: span 2;
   display: flex !important;
@@ -779,11 +803,14 @@ select {
 }
 
 .action-bar {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 10px;
   padding: 12px 16px;
   border-top: 1px solid var(--line);
   background: #fff;
+  box-shadow: 0 -8px 18px rgba(31, 41, 51, 0.04);
 }
 
 .action-bar .primary-button {
@@ -832,6 +859,10 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
+}
+
+.result-card.needs-review {
+  border-color: #f4d8a8;
 }
 
 .result-pair {
@@ -984,6 +1015,24 @@ select {
 .quality-note.failed {
   background: #fff1f1;
   color: var(--red) !important;
+}
+
+.quality-risk-list {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 1px solid #ffe0b2;
+  border-radius: 7px;
+  background: #fffaf0;
+}
+
+.quality-risk-list span {
+  display: block;
+  color: #7a4b00;
+  font-size: 11px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
 }
 
 .result-actions {
@@ -1348,8 +1397,16 @@ select {
   color: var(--red);
 }
 
+.status-review {
+  color: #b45309;
+}
+
 .progress-track.status-done i {
   background: var(--brand);
+}
+
+.progress-track.status-review i {
+  background: #f59e0b;
 }
 
 .progress-track.status-uploading i,

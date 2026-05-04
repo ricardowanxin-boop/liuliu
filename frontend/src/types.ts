@@ -1,7 +1,7 @@
 export type Provider = "zenmux" | "doubao" | "openai_compatible";
 export type Quality = "standard" | "high";
 export type OutputFormat = "png" | "jpg";
-export type QueueStatus = "queued" | "uploading" | "running" | "done" | "failed";
+export type QueueStatus = "queued" | "uploading" | "running" | "done" | "review" | "failed";
 
 export interface UploadedImage {
   id: string;
@@ -25,6 +25,8 @@ export interface GenerationRequest {
   qualityControlEnabled: boolean;
   qualityThreshold: number;
   qualityMaxRetries: number;
+  subjectGuardEnabled: boolean;
+  texturePreservationEnabled: boolean;
 }
 
 export interface GenerationResponseItem {
@@ -59,6 +61,7 @@ export interface RuntimeConfig {
   providers: Provider[];
   defaultProvider: Provider;
   models: Record<Provider, string[]>;
+  modelCapabilities?: Partial<Record<Provider, Record<string, ModelCapability>>>;
   defaults: {
     provider: Provider;
     model: string;
@@ -68,6 +71,12 @@ export interface RuntimeConfig {
   };
   apiConnected: boolean;
   apiConnections: Record<Provider, boolean>;
+}
+
+export interface ModelCapability {
+  apiMode?: string;
+  imageEditEnabled?: boolean;
+  imageEditNote?: string | null;
 }
 
 export interface QueueItem {

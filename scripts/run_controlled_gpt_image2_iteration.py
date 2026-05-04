@@ -103,6 +103,7 @@ def _post_generation(*, files: list[Path], args: argparse.Namespace) -> dict[str
             "quality_control_enabled": "true",
             "quality_threshold": str(args.quality_threshold),
             "quality_max_retries": str(args.quality_max_retries),
+            "subject_guard_enabled": "true",
         }
         response = requests.post(API_URL, data=data, files=multipart, timeout=args.timeout)
         try:

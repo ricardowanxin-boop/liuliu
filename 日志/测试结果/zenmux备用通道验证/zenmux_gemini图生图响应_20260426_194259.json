@@ -1,0 +1,26 @@
+{
+  "jobId": "job_20260426114259_71abcd05",
+  "status": "failed",
+  "items": [
+    {
+      "sourceName": "原图.jpg",
+      "status": "failed",
+      "progress": 100,
+      "resultDataUrl": null,
+      "cleanupNote": null,
+      "qualityScore": null,
+      "qualityPassed": null,
+      "qualityReasons": [],
+      "retryCount": 0,
+      "retried": false,
+      "qualityRetryLimit": 0,
+      "iterationLogPath": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0021_20260426_194312_原图_failed/记录.md",
+      "stageSummaryPath": null,
+      "switchReviewPath": null,
+      "switchWarning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。",
+      "error": "ZenMux Gemini 服务返回成功，但未包含图片结果。"
+    }
+  ],
+  "providerCallCount": 1,
+  "providerCallLimit": 1
+}

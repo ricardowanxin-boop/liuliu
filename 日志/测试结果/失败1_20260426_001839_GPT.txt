@@ -1,0 +1,35 @@
+时间：20260426_001839
+序号：1
+Provider：zenmux
+Model：openai/gpt-image-2
+后端状态：failed
+图片状态：failed
+错误：ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。
+
+原始响应：
+{
+  "jobId": "job_20260425161839_4d1bebbd",
+  "status": "failed",
+  "items": [
+    {
+      "sourceName": "原图.jpg",
+      "status": "failed",
+      "progress": 100,
+      "resultDataUrl": null,
+      "cleanupNote": null,
+      "qualityScore": null,
+      "qualityPassed": null,
+      "qualityReasons": [],
+      "retryCount": 0,
+      "retried": false,
+      "qualityRetryLimit": 0,
+      "iterationLogPath": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0013_20260426_002040_原图_failed/记录.md",
+      "stageSummaryPath": null,
+      "switchReviewPath": null,
+      "switchWarning": null,
+      "error": "ZenMux 当前连接不稳定，服务端提前断开了响应。请稍后重试，或检查 ZenMux GPT-image-2 通道状态。"
+    }
+  ],
+  "providerCallCount": 1,
+  "providerCallLimit": 1
+}

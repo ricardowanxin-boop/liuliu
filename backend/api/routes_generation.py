@@ -12,6 +12,7 @@ from backend.services.generation_service import (
     UploadedImagePayload,
     run_generation,
 )
+from backend.services.config import get_image_edit_block_reason, resolve_provider_config
 
 
 router = APIRouter(prefix="/api/generations", tags=["generations"])
@@ -36,6 +37,8 @@ async def create_generation(
     quality_control_enabled: Annotated[bool, Form()] = True,
     quality_threshold: Annotated[int, Form()] = 72,
     quality_max_retries: Annotated[int, Form()] = 1,
+    subject_guard_enabled: Annotated[bool, Form()] = True,
+    texture_preservation_enabled: Annotated[bool, Form()] = True,
 ) -> GenerationJobResponse:
     """Run a synchronous generation job for uploaded reference images."""
     form = await request.form()
@@ -52,6 +55,12 @@ async def create_generation(
 
     if not (prompt or "").strip():
         raise HTTPException(status_code=400, detail="提示词不能为空。")
+
+    selected_provider = provider_type or provider or "zenmux"
+    selected_model = (model or "").strip() or resolve_provider_config(selected_provider).model
+    image_edit_block_reason = get_image_edit_block_reason(selected_provider, selected_model)
+    if image_edit_block_reason:
+        raise HTTPException(status_code=400, detail=image_edit_block_reason)
 
     normalized_retries = max(0, min(2, quality_max_retries))
     planned_calls = len(uploads) * (1 + normalized_retries)
@@ -73,8 +82,8 @@ async def create_generation(
 
     options = GenerationOptions(
         prompt=prompt,
-        provider_type=provider_type or provider or "zenmux",
-        model=model,
+        provider_type=selected_provider,
+        model=selected_model,
         size=size,
         quality=quality,
         output_format=output_format,
@@ -85,5 +94,7 @@ async def create_generation(
         quality_control_enabled=quality_control_enabled,
         quality_threshold=quality_threshold,
         quality_max_retries=normalized_retries,
+        subject_guard_enabled=subject_guard_enabled,
+        texture_preservation_enabled=texture_preservation_enabled,
     )
     return run_generation(files=payloads, options=options)

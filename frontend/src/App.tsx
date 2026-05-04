@@ -68,6 +68,7 @@ const statusLabel: Record<QueueStatus, string> = {
   uploading: "上传中",
   running: "生成中",
   done: "已完成",
+  review: "需复核",
   failed: "失败",
 };
 
@@ -91,8 +92,40 @@ function getStatus(progress: number): QueueStatus {
   return "queued";
 }
 
-function isTrustedGenerationItem(item: GenerationResponseItem | undefined): item is GenerationResponseItem {
-  return Boolean(item?.status === "done" && item.resultDataUrl && item.qualityPassed !== false);
+function hasGeneratedImage(item: GenerationResponseItem | undefined): item is GenerationResponseItem {
+  return Boolean(item?.resultDataUrl);
+}
+
+function isPassedGenerationItem(item: GenerationResponseItem | undefined): item is GenerationResponseItem {
+  return Boolean(item?.resultDataUrl && item.qualityPassed !== false);
+}
+
+function generationItemHasQualityWarnings(item: GenerationResponseItem | undefined) {
+  return Boolean(
+    item?.qualityReasons?.some((reason) => reason && !reason.startsWith("通过本地质检")),
+  );
+}
+
+function summarizeQualityReasons(reasons: string[] | undefined, limit = 2) {
+  const cleanReasons = (reasons || []).filter(Boolean);
+  if (cleanReasons.length <= limit) return cleanReasons;
+  return [...cleanReasons.slice(0, limit), `另有 ${cleanReasons.length - limit} 项风险`];
+}
+
+function hasQualityWarnings(result: ResultItem) {
+  return Boolean(
+    result.qualityReasons?.some((reason) => reason && !reason.startsWith("通过本地质检")),
+  );
+}
+
+function hasResultImage(result: ResultItem) {
+  return Boolean(result.imageUrl);
+}
+
+function selectEditableModel(provider: Provider, models: string[], config: RuntimeConfig | null, preferred?: string) {
+  const capabilities = config?.modelCapabilities?.[provider] || {};
+  const candidates = preferred && models.includes(preferred) ? [preferred, ...models.filter((item) => item !== preferred)] : models;
+  return candidates.find((item) => capabilities[item]?.imageEditEnabled !== false) || candidates[0];
 }
 
 function App() {
@@ -106,6 +139,8 @@ function App() {
   const [watermarkCleanupEnabled, setWatermarkCleanupEnabled] = useState(true);
   const [watermarkKeywords, setWatermarkKeywords] = useState(defaultWatermarkKeywords);
   const [qualityControlEnabled, setQualityControlEnabled] = useState(true);
+  const [subjectGuardEnabled, setSubjectGuardEnabled] = useState(true);
+  const [texturePreservationEnabled, setTexturePreservationEnabled] = useState(true);
   const [uploads, setUploads] = useState<UploadedImage[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [results, setResults] = useState<ResultItem[]>([]);
@@ -125,19 +160,32 @@ function App() {
     [provider, runtimeConfig],
   );
   const apiConnected = runtimeConfig?.apiConnections?.[provider] ?? false;
+  const selectedModelCapability = runtimeConfig?.modelCapabilities?.[provider]?.[model];
+  const imageEditBlocked = selectedModelCapability?.imageEditEnabled === false;
+  const imageEditBlockNote =
+    selectedModelCapability?.imageEditNote ||
+    "当前模型暂未确认支持参考图编辑，请切换到可用通道后再生成。";
 
   useEffect(() => {
-    if (!models.includes(model)) {
-      setModel(models[0]);
+    const nextModel = selectEditableModel(provider, models, runtimeConfig, model);
+    if (nextModel && nextModel !== model) {
+      setModel(nextModel);
     }
-  }, [model, models]);
+  }, [model, models, provider, runtimeConfig]);
 
   useEffect(() => {
     void getRuntimeConfig()
       .then((config) => {
         setRuntimeConfig(config);
         setProvider(config.defaults.provider);
-        setModel(config.defaults.model);
+        setModel(
+          selectEditableModel(
+            config.defaults.provider,
+            config.models[config.defaults.provider] || providerModels[config.defaults.provider],
+            config,
+            config.defaults.model,
+          ),
+        );
         setSize(config.defaults.size);
         setQuality(config.defaults.quality);
         setOutputFormat(config.defaults.outputFormat);
@@ -153,13 +201,19 @@ function App() {
   }, [uploads]);
 
   useEffect(() => {
+    if (imageEditBlocked) {
+      setNotice("当前模型只验证了文字生图，暂不可用于参考图编辑");
+    }
+  }, [imageEditBlocked]);
+
+  useEffect(() => {
     return () => {
       uploadsRef.current.forEach((upload) => URL.revokeObjectURL(upload.url));
       timersRef.current.forEach((timerId) => window.clearTimeout(timerId));
     };
   }, []);
 
-  const canGenerate = prompt.trim().length > 0 && uploads.length > 0 && !isGenerating;
+  const canGenerate = prompt.trim().length > 0 && uploads.length > 0 && !isGenerating && !imageEditBlocked;
 
   const characterCount = useMemo(() => prompt.trim().length, [prompt]);
 
@@ -223,7 +277,7 @@ function App() {
   };
 
   const exportAllResults = () => {
-    const downloadableResults = results.filter((result) => result.imageUrl);
+    const downloadableResults = results.filter(hasResultImage);
     if (downloadableResults.length === 0) {
       setNotice("暂无可导出的结果图");
       return;
@@ -231,13 +285,15 @@ function App() {
 
     downloadableResults.forEach((result, index) => {
       window.setTimeout(() => {
+        const reviewPrefix = result.qualityPassed === false || hasQualityWarnings(result) ? "需复核_" : "";
         triggerDownload(
           result.imageUrl as string,
-          `${sanitizeDownloadName(result.title)}.${outputFormat}`,
+          `${reviewPrefix}${sanitizeDownloadName(result.title)}.${outputFormat}`,
         );
       }, index * 180);
     });
-    setNotice(`正在导出 ${downloadableResults.length} 张结果图`);
+    const reviewCount = downloadableResults.filter((result) => result.qualityPassed === false || hasQualityWarnings(result)).length;
+    setNotice(`正在导出 ${downloadableResults.length} 张结果图${reviewCount ? `，其中 ${reviewCount} 张带质检复核提示` : ""}`);
   };
 
   const deleteResult = (id: string) => {
@@ -287,10 +343,7 @@ function App() {
     serverResponse?: GenerationResponse,
   ) => {
     const responseItems = serverResponse?.items || [];
-    const hasCompleteShape =
-      serverResponse?.status === "completed" &&
-      responseItems.length === taskIds.length &&
-      taskIds.length > 0;
+    const hasResponseShape = responseItems.length === taskIds.length && taskIds.length > 0;
     const generatedAt = new Date().toLocaleTimeString("zh-CN", {
       hour: "2-digit",
       minute: "2-digit",
@@ -300,11 +353,12 @@ function App() {
       current.map((item) => {
         const responseItem = responseItems[taskIds.indexOf(item.id)];
         if (!taskIds.includes(item.id)) return item;
-        const trusted = hasCompleteShape && isTrustedGenerationItem(responseItem);
+        const hasImage = hasResponseShape && hasGeneratedImage(responseItem);
+        const passed = hasResponseShape && isPassedGenerationItem(responseItem);
         return {
           ...item,
           progress: 100,
-          status: trusted ? "done" : "failed",
+          status: passed ? "done" : hasImage ? "review" : "failed",
         };
       }),
     );
@@ -323,7 +377,7 @@ function App() {
 
       const nextResults = sourceItems.flatMap((source, index) => {
         const responseItem = responseItems[index];
-        if (!hasCompleteShape || !isTrustedGenerationItem(responseItem)) {
+        if (!hasResponseShape || !hasGeneratedImage(responseItem)) {
           return [];
         }
 
@@ -362,22 +416,25 @@ function App() {
     });
 
     setIsGenerating(false);
-    const trustedCount = responseItems.filter(isTrustedGenerationItem).length;
-    const failedCount = Math.max(taskIds.length - trustedCount, 0);
-    if (!hasCompleteShape || failedCount > 0) {
+    const generatedCount = responseItems.filter(hasGeneratedImage).length;
+    const cleanPassCount = responseItems.filter((item) => isPassedGenerationItem(item) && !generationItemHasQualityWarnings(item)).length;
+    const reviewCount = Math.max(generatedCount - cleanPassCount, 0);
+    const failedCount = Math.max(taskIds.length - generatedCount, 0);
+    if (!hasResponseShape || failedCount > 0) {
       const firstError = responseItems.find((item) => item.error)?.error;
       const callHint =
         typeof serverResponse?.providerCallCount === "number"
           ? `（本轮真实调用 ${serverResponse.providerCallCount} 次）`
           : "";
-      setError(firstError || `${failedCount} 张图片未通过生成/质检流程，请检查模型、Key 或提示词。${callHint}`);
-      setNotice(`生成未通过，${failedCount} 张未交付`);
+      setError(firstError || `${failedCount} 张图片没有返回结果，请检查模型、Key 或通道。${callHint}`);
+      setNotice(`生成结束，${generatedCount} 张可查看，${failedCount} 张无结果`);
       return;
     }
+    setError("");
     setNotice(
       typeof serverResponse?.providerCallCount === "number"
-        ? `生成完成，结果已加入右侧画廊，本轮调用 ${serverResponse.providerCallCount} 次`
-        : "生成完成，结果已加入右侧画廊",
+        ? `生成完成，${generatedCount} 张已加入画廊${reviewCount ? `，${reviewCount} 张需复核` : ""}，本轮调用 ${serverResponse.providerCallCount} 次`
+        : `生成完成，${generatedCount} 张已加入画廊${reviewCount ? `，${reviewCount} 张需复核` : ""}`,
     );
   };
 
@@ -431,6 +488,11 @@ function App() {
       return;
     }
 
+    if (imageEditBlocked) {
+      setError(imageEditBlockNote);
+      return;
+    }
+
     const jobId = makeId("job");
     const taskSources = uploads;
 
@@ -470,6 +532,8 @@ function App() {
         qualityControlEnabled,
         qualityThreshold: 72,
         qualityMaxRetries: 1,
+        subjectGuardEnabled,
+        texturePreservationEnabled,
       });
       completeJob(response.jobId || jobId, taskIds, taskSources, response);
     } catch (error) {
@@ -678,7 +742,7 @@ function App() {
               <div className="section-heading">
                 <div>
                   <h2>出图处理</h2>
-                  <p>反 AI 棚拍、去水印与自动质检默认开启</p>
+                  <p>反 AI 棚拍、真实纹理保护与自动质检默认开启</p>
                 </div>
               </div>
 
@@ -714,6 +778,28 @@ function App() {
                     type="checkbox"
                     checked={qualityControlEnabled}
                     onChange={(event) => setQualityControlEnabled(event.target.checked)}
+                  />
+                </label>
+                <label className="switch-control">
+                  <span>
+                    商品主体保护
+                    <small>锁定商品结构、颜色和关键细节</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={subjectGuardEnabled}
+                    onChange={(event) => setSubjectGuardEnabled(event.target.checked)}
+                  />
+                </label>
+                <label className="switch-control">
+                  <span>
+                    真实纹理保护
+                    <small>保留桌面、书页、布料和自然噪点</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={texturePreservationEnabled}
+                    onChange={(event) => setTexturePreservationEnabled(event.target.checked)}
                   />
                 </label>
                 <label className="keyword-control">
@@ -784,6 +870,12 @@ function App() {
                   </select>
                 </label>
               </div>
+              {imageEditBlocked ? (
+                <div className="model-warning" role="status">
+                  <strong>当前模型不可用于图生图</strong>
+                  <span>{imageEditBlockNote}</span>
+                </div>
+              ) : null}
               </div>
             </div>
 
@@ -808,7 +900,7 @@ function App() {
               <div className="view-actions">
                 <button
                   className="secondary-button small"
-                  disabled={!results.some((result) => result.imageUrl)}
+                  disabled={!results.some(hasResultImage)}
                   onClick={exportAllResults}
                 >
                   <Download size={15} />
@@ -846,7 +938,7 @@ function App() {
               ) : null}
 
               {results.map((result) => (
-                <article className="result-card" key={result.id}>
+                <article className={`result-card ${hasQualityWarnings(result) || result.qualityPassed === false ? "needs-review" : ""}`} key={result.id}>
                   <label className="select-box" aria-label={`选择 ${result.title}`}>
                     <input type="checkbox" />
                   </label>
@@ -884,9 +976,17 @@ function App() {
                     <strong>{result.title}</strong>
                     <span>{result.size.replace("x", " x ")} · {result.createdAt}</span>
                     {typeof result.qualityScore === "number" ? (
-                      <small className={result.qualityPassed ? "quality-note passed" : "quality-note failed"}>
-                        质检 {result.qualityScore} 分{result.retried ? ` · 已自动重试 ${result.retryCount || 0} 次` : ""}
+                      <small className={result.qualityPassed && !hasQualityWarnings(result) ? "quality-note passed" : "quality-note failed"}>
+                        质检 {result.qualityScore} 分 · {result.qualityPassed && !hasQualityWarnings(result) ? "可交付" : "有复核提示"}
+                        {result.retried ? ` · 已自动重试 ${result.retryCount || 0} 次` : ""}
                       </small>
+                    ) : null}
+                    {hasQualityWarnings(result) ? (
+                      <div className="quality-risk-list" aria-label={`${result.title} 质检风险`}>
+                        {summarizeQualityReasons(result.qualityReasons).map((reason) => (
+                          <span key={reason}>{reason}</span>
+                        ))}
+                      </div>
                     ) : null}
                     {result.iterationLogPath ? <small>已写入迭代日志</small> : null}
                     {result.stageSummaryPath ? <small>已生成阶段总结</small> : null}
@@ -904,7 +1004,7 @@ function App() {
                       }}
                     >
                       <Download size={15} />
-                      下载
+                      {result.qualityPassed === false || hasQualityWarnings(result) ? "下载复核图" : "下载"}
                     </button>
                     <button onClick={() => setPreviewResult(result)} disabled={!result.imageUrl}>
                       <Maximize2 size={15} />

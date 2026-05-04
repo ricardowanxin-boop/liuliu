@@ -55,6 +55,8 @@ export async function createGeneration(
   formData.append("quality_control_enabled", String(request.qualityControlEnabled));
   formData.append("quality_threshold", String(request.qualityThreshold));
   formData.append("quality_max_retries", String(request.qualityMaxRetries));
+  formData.append("subject_guard_enabled", String(request.subjectGuardEnabled));
+  formData.append("texture_preservation_enabled", String(request.texturePreservationEnabled));
 
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 310_000);

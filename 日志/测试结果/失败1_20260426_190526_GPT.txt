@@ -1,0 +1,35 @@
+时间：20260426_190526
+序号：1
+Provider：zenmux
+Model：openai/gpt-image-2
+后端状态：failed
+图片状态：failed
+错误：ZenMux 图片编辑请求失败：500 None. {'error': {'code': '500', 'type': 'internal_server_error', 'message': 'Resource not found'}}
+
+原始响应：
+{
+  "jobId": "job_20260426110526_c4ac88be",
+  "status": "failed",
+  "items": [
+    {
+      "sourceName": "原图.jpg",
+      "status": "failed",
+      "progress": 100,
+      "resultDataUrl": null,
+      "cleanupNote": null,
+      "qualityScore": null,
+      "qualityPassed": null,
+      "qualityReasons": [],
+      "retryCount": 0,
+      "retried": false,
+      "qualityRetryLimit": 0,
+      "iterationLogPath": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/迭代记录/0020_20260426_190617_原图_failed/记录.md",
+      "stageSummaryPath": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/阶段总结/阶段总结_0016-0020.md",
+      "switchReviewPath": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/阶段总结/换方案评估_截至0020.md",
+      "switchWarning": "已达到 20 次迭代观察线，本轮仍未稳定达标，应考虑切换局部重绘或分阶段修图方案。",
+      "error": "ZenMux 图片编辑请求失败：500 None. {'error': {'code': '500', 'type': 'internal_server_error', 'message': 'Resource not found'}}"
+    }
+  ],
+  "providerCallCount": 1,
+  "providerCallLimit": 1
+}

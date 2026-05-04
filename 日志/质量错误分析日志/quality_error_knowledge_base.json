@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-04-25 22:14:23",
+  "updated_at": "2026-04-28 01:09:24",
   "severity_levels": {
     "P0": "致命逻辑错误：人体结构、商品结构、物理常识、品牌/合规错误，原则上不可交付。",
     "P1": "严重交付错误：商品主体变弱、材质错、关键细节丢失、水印残留，需重试或人工修。",
@@ -12,7 +12,7 @@
       "id": "background_microtexture_loss",
       "severity": "P2",
       "title": "相对原图桌面/背景纹理下降，真实微纹理被抹平",
-      "count": 3,
+      "count": 27,
       "root_causes": [
         "图生图整体重绘倾向会把真实照片里的噪点、桌面纹理和局部不完美当成瑕疵抹掉。"
       ],
@@ -21,39 +21,192 @@
       ],
       "examples": [
         {
-          "created_at": "2026-04-25 22:14:23",
-          "pair_sequence": 1,
-          "provider_label": "GPT",
-          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
-          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
-          "score": 86,
-          "status": "auto_detected"
-        },
-        {
-          "created_at": "2026-04-25 22:14:23",
+          "created_at": "2026-04-26 00:23:24",
           "pair_sequence": 3,
           "provider_label": "GPT",
           "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
           "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
-          "score": 62,
+          "score": 36,
           "status": "auto_detected"
         },
         {
-          "created_at": "2026-04-25 22:14:23",
+          "created_at": "2026-04-26 00:23:24",
           "pair_sequence": 4,
           "provider_label": "Doubao",
           "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
           "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
-          "score": 56,
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 60,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 60,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 86,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 42,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 76,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 76,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
           "status": "auto_detected"
         }
       ]
     },
     "product_subject_detail_loss": {
       "id": "product_subject_detail_loss",
-      "severity": "P1",
+      "severity": "P0",
       "title": "相对原图商品主体细节下降，链条、吊坠、金属或珠宝边缘不够抓人",
-      "count": 5,
+      "count": 64,
       "root_causes": [
         "模型优先优化整体画面氛围，商品局部高频细节没有被作为第一优化目标。"
       ],
@@ -62,48 +215,183 @@
       ],
       "examples": [
         {
-          "created_at": "2026-04-25 22:14:23",
-          "pair_sequence": 2,
-          "provider_label": "GPT",
-          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
-          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
-          "score": 82,
-          "status": "auto_detected"
-        },
-        {
-          "created_at": "2026-04-25 22:14:23",
-          "pair_sequence": 3,
-          "provider_label": "GPT",
-          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
-          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
-          "score": 62,
-          "status": "auto_detected"
-        },
-        {
-          "created_at": "2026-04-25 22:14:23",
-          "pair_sequence": 4,
-          "provider_label": "Doubao",
-          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
-          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
-          "score": 56,
-          "status": "auto_detected"
-        },
-        {
-          "created_at": "2026-04-25 22:14:23",
+          "created_at": "2026-04-28 00:43:08",
           "pair_sequence": 5,
           "provider_label": "Doubao",
           "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
           "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
-          "score": 82,
+          "score": 71,
           "status": "auto_detected"
         },
         {
-          "created_at": "2026-04-25 22:14:23",
+          "created_at": "2026-04-28 00:43:08",
           "pair_sequence": 6,
           "provider_label": "Doubao",
           "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
           "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
-          "score": 82,
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 72,
           "status": "auto_detected"
         }
       ]
@@ -112,7 +400,7 @@
       "id": "output_resolution_loss",
       "severity": "P3",
       "title": "结果尺寸明显小于原图，交付清晰度有损失",
-      "count": 1,
+      "count": 9,
       "root_causes": [
         "输出尺寸或裁切策略导致结果低于原图交付清晰度。"
       ],
@@ -128,6 +416,78 @@
           "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
           "score": 62,
           "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:17:29",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:23:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 42,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
         }
       ]
     },
@@ -135,7 +495,7 @@
       "id": "global_detail_softening",
       "severity": "P2",
       "title": "相对原图全局边缘细节下降，存在整体降噪或柔化倾向",
-      "count": 1,
+      "count": 9,
       "root_causes": [
         "模型生成过程带来整体柔化或降噪，导致真实拍摄边缘和材质细节下降。"
       ],
@@ -151,6 +511,78 @@
           "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
           "score": 56,
           "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:17:29",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:23:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
         }
       ]
     },
@@ -158,7 +590,7 @@
       "id": "nail_decoration_wrong_side",
       "severity": "P0",
       "title": "手心朝上时，美甲贴钻被画到指甲内侧/掌心侧",
-      "count": 1,
+      "count": 6,
       "root_causes": [
         "图生图模型把可见的透明甲尖误判为可贴钻的甲面，缺少手心/手背方向和指甲盖外侧的解剖约束。"
       ],
@@ -174,6 +606,729 @@
           "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
           "score": null,
           "status": "human_confirmed"
+        },
+        {
+          "created_at": "2026-04-26 00:17:29",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": null,
+          "status": "human_confirmed"
+        },
+        {
+          "created_at": "2026-04-26 00:23:24",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": null,
+          "status": "human_confirmed"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": null,
+          "status": "human_confirmed"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": null,
+          "status": "human_confirmed"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": null,
+          "status": "human_confirmed"
+        }
+      ]
+    },
+    "hand_anatomy_landmark_failure": {
+      "id": "hand_anatomy_landmark_failure",
+      "severity": "P0",
+      "title": "MediaPipe 未能在结果图中稳定识别手部 21 个关键点，手型、指甲朝向或贴钻位置可能已经不符合真实人体结构",
+      "count": 36,
+      "root_causes": [
+        "结果图的手部几何结构未通过本地关键点检测，可能是模型把手心/手背、指腹/甲面、指尖方向画混了。"
+      ],
+      "fix_strategies": [
+        "生成前注入 MediaPipe 手部拓扑约束；生成后若手部关键点缺失、拓扑翻转或掌心侧疑似新增贴钻，则直接按 P0 阻断交付。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 56,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 56,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 60,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 74,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 56,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 40,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 30,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 56,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 56,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 21,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 71,
+          "status": "auto_detected"
+        }
+      ]
+    },
+    "misc_quality_issue": {
+      "id": "misc_quality_issue",
+      "severity": "P0",
+      "title": "结果图指尖掌心侧疑似新增异常高亮贴钻痕迹（66.5），可能把钻画到了指甲内侧",
+      "count": 11,
+      "root_causes": [
+        "需要人工复盘确认。"
+      ],
+      "fix_strategies": [
+        "进入人工错题集，补充专门约束。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-26 00:23:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 40,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 100,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 21,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 71,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 1,
+          "provider_label": "unknown",
+          "source_path": "日志/测试结果/原图1_20260428_010708_ZenMux.png",
+          "result_path": "日志/测试结果/结果1_20260428_010708_ZenMux.png",
+          "score": 82,
+          "status": "auto_detected"
+        }
+      ]
+    },
+    "nail_inner_side_artifact": {
+      "id": "nail_inner_side_artifact",
+      "severity": "P0",
+      "title": "结果图指尖掌心侧疑似新增异常高亮贴钻痕迹（66.5），可能把钻画到了指甲内侧",
+      "count": 2,
+      "root_causes": [
+        "结果图在指尖掌心侧区域新增了不应出现的高亮装饰，说明模型仍把可见甲尖或掌侧边缘误判成可贴钻甲面。"
+      ],
+      "fix_strategies": [
+        "在提示词中继续强化掌心侧禁区约束，并把掌心侧亮点差分检测纳入 P0 规则；一旦触发直接拒绝交付。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-26 00:24:52",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 40,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 10:05:51",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 40,
+          "status": "auto_detected"
+        }
+      ]
+    },
+    "subject_structure_drift": {
+      "id": "subject_structure_drift",
+      "severity": "P0",
+      "title": "商品/手部主体结构相对原图变化过大（边缘召回 0.16，边缘重合 0.12），可能出现商品形状、链条走向、吊坠轮廓或持物关系被改坏",
+      "count": 4,
+      "root_causes": [
+        "整体图生图会把商品、手部和背景一起重绘，缺少商品主体 mask 保护，导致主体结构漂移。"
+      ],
+      "fix_strategies": [
+        "短期用主体相似度硬门禁阻断，后续引入商品 mask/局部编辑，只允许背景变化，不允许主体结构漂移。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 21,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        }
+      ]
+    },
+    "subject_high_frequency_detail_loss": {
+      "id": "subject_high_frequency_detail_loss",
+      "severity": "P1",
+      "title": "商品主体高频细节低于原图（主体边缘能量比 0.51），链条、镶边小钻、宝石或吊坠边缘可能变糊",
+      "count": 12,
+      "root_causes": [
+        "模型在生成过程中对商品主体做了降噪或柔化，链条、镶边、宝石等高频细节被抹掉。"
+      ],
+      "fix_strategies": [
+        "用主体局部锐化和边缘能量门禁保护链条、镶边和宝石细节；低于原图直接重试或拒绝。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 42,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-26 13:17:50",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "/Users/ricardo/文稿/创业/刘刘电商解决方案/日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 36,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 21,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:43:08",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        }
+      ]
+    },
+    "source_hand_landmark_low_confidence": {
+      "id": "source_hand_landmark_low_confidence",
+      "severity": "P2",
+      "title": "原图手部未能被 MediaPipe 稳定识别，涉及美甲/手部改造的结果需要人工复核",
+      "count": 17,
+      "root_causes": [
+        "原图可能存在遮挡、透视角度或低对比度，导致本地手部关键点不能稳定作为几何基准；这属于质检信心不足，不等同于结果图已经画错。"
+      ],
+      "fix_strategies": [
+        "降低自动判死力度：标记为人工复核风险，同时继续用商品主体和掌心侧亮点差分做硬质检。"
+      ],
+      "examples": [
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 76,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 90,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 00:51:21",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260425_214656_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260425_214656_GPT.png",
+          "score": 76,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 1,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图1_20260426_100123_GPT.png",
+          "result_path": "日志/测试结果/结果1_20260426_100123_GPT.png",
+          "score": 90,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 1,
+          "provider_label": "unknown",
+          "source_path": "日志/测试结果/原图1_20260428_010708_ZenMux.png",
+          "result_path": "日志/测试结果/结果1_20260428_010708_ZenMux.png",
+          "score": 82,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图2_20260425_214806_GPT.png",
+          "result_path": "日志/测试结果/结果2_20260425_214806_GPT.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 2,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图2_20260426_002041_Doubao.png",
+          "result_path": "日志/测试结果/结果2_20260426_002041_Doubao.png",
+          "score": 22,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 3,
+          "provider_label": "GPT",
+          "source_path": "日志/测试结果/原图3_20260425_214915_GPT.png",
+          "result_path": "日志/测试结果/结果3_20260425_214915_GPT.png",
+          "score": 32,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 4,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图4_20260425_215059_Doubao.png",
+          "result_path": "日志/测试结果/结果4_20260425_215059_Doubao.png",
+          "score": 26,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 5,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图5_20260425_215132_Doubao.png",
+          "result_path": "日志/测试结果/结果5_20260425_215132_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
+        },
+        {
+          "created_at": "2026-04-28 01:09:24",
+          "pair_sequence": 6,
+          "provider_label": "Doubao",
+          "source_path": "日志/测试结果/原图6_20260425_215206_Doubao.png",
+          "result_path": "日志/测试结果/结果6_20260425_215206_Doubao.png",
+          "score": 72,
+          "status": "auto_detected"
         }
       ]
     }

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import base64
+import argparse
 import json
 import shutil
 import time
@@ -31,23 +32,44 @@ class ProviderRun:
     size: str
 
 
-RUNS = [
+ALL_RUNS = [
     ProviderRun(label="GPT", provider="zenmux", model="openai/gpt-image-2", size="1024x1024"),
     ProviderRun(label="Doubao", provider="doubao", model="doubao-seedream-4-5-251128", size="1024x1024"),
 ]
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--attempts-per-provider", type=int, default=3)
+    parser.add_argument("--quality-control", action="store_true")
+    parser.add_argument("--quality-threshold", type=int, default=72)
+    parser.add_argument("--quality-max-retries", type=int, default=0)
+    parser.add_argument(
+        "--providers",
+        default="zenmux,doubao",
+        help="逗号分隔 provider 列表，可选 zenmux,doubao；用于控费测试时只跑指定通道。",
+    )
+    args = parser.parse_args()
+
+    if args.attempts_per_provider < 1 or args.attempts_per_provider > 5:
+        raise SystemExit("--attempts-per-provider 必须在 1 到 5 之间")
+    if args.quality_max_retries < 0 or args.quality_max_retries > 1:
+        raise SystemExit("--quality-max-retries 为了控费只允许 0 或 1")
+
     if not SOURCE_IMAGE.exists():
         raise SystemExit(f"找不到测试原图：{SOURCE_IMAGE}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, Any]] = []
     sequence = 1
+    requested_providers = {item.strip() for item in args.providers.split(",") if item.strip()}
+    runs = [run for run in ALL_RUNS if run.provider in requested_providers]
+    if not runs:
+        raise SystemExit("--providers 至少要包含 zenmux 或 doubao")
 
-    for provider_run in RUNS:
-        for attempt in range(1, 4):
-            record = run_once(sequence=sequence, attempt=attempt, provider_run=provider_run)
+    for provider_run in runs:
+        for attempt in range(1, args.attempts_per_provider + 1):
+            record = run_once(sequence=sequence, attempt=attempt, provider_run=provider_run, args=args)
             records.append(record)
             sequence += 1
             time.sleep(1.2)
@@ -56,7 +78,7 @@ def main() -> None:
     print(json.dumps({"summary": str(summary_path), "records": records}, ensure_ascii=False, indent=2))
 
 
-def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun) -> dict[str, Any]:
+def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun, args: argparse.Namespace) -> dict[str, Any]:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_label = provider_run.label
     source_path = OUTPUT_DIR / f"原图{sequence}_{timestamp}_{safe_label}.png"
@@ -64,7 +86,7 @@ def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun) -> dict[
     failure_path = OUTPUT_DIR / f"失败{sequence}_{timestamp}_{safe_label}.txt"
     shutil.copyfile(SOURCE_IMAGE, source_path)
 
-    payload = post_generation(provider_run)
+    payload = post_generation(provider_run, args=args)
     item = (payload.get("items") or [{}])[0] if isinstance(payload.get("items"), list) else {}
     result_data_url = item.get("resultDataUrl") if isinstance(item, dict) else None
 
@@ -77,23 +99,26 @@ def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun) -> dict[
         result_path.write_bytes(decode_data_url(result_data_url))
         saved_result = True
     else:
-        failure_path.write_text(
-            "\n".join(
-                [
-                    f"时间：{timestamp}",
-                    f"序号：{sequence}",
-                    f"Provider：{provider_run.provider}",
-                    f"Model：{provider_run.model}",
-                    f"后端状态：{status}",
-                    f"图片状态：{item_status}",
-                    f"错误：{error or '无结果图'}",
-                    "",
-                    "原始响应：",
-                    json.dumps(payload, ensure_ascii=False, indent=2)[:12000],
-                ]
-            ),
-            encoding="utf-8",
-        )
+        if _copy_result_from_iteration_log(item, result_path):
+            saved_result = True
+        else:
+            failure_path.write_text(
+                "\n".join(
+                    [
+                        f"时间：{timestamp}",
+                        f"序号：{sequence}",
+                        f"Provider：{provider_run.provider}",
+                        f"Model：{provider_run.model}",
+                        f"后端状态：{status}",
+                        f"图片状态：{item_status}",
+                        f"错误：{error or '无结果图'}",
+                        "",
+                        "原始响应：",
+                        json.dumps(payload, ensure_ascii=False, indent=2)[:12000],
+                    ]
+                ),
+                encoding="utf-8",
+            )
 
     return {
         "sequence": sequence,
@@ -105,6 +130,9 @@ def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun) -> dict[
         "status": status,
         "item_status": item_status,
         "provider_call_count": payload.get("providerCallCount"),
+        "quality_score": item.get("qualityScore") if isinstance(item, dict) else None,
+        "quality_passed": item.get("qualityPassed") if isinstance(item, dict) else None,
+        "quality_reasons": item.get("qualityReasons") if isinstance(item, dict) else [],
         "source_path": str(source_path),
         "result_path": str(result_path) if saved_result else None,
         "failure_path": str(failure_path) if not saved_result else None,
@@ -112,7 +140,7 @@ def run_once(*, sequence: int, attempt: int, provider_run: ProviderRun) -> dict[
     }
 
 
-def post_generation(provider_run: ProviderRun) -> dict[str, Any]:
+def post_generation(provider_run: ProviderRun, *, args: argparse.Namespace) -> dict[str, Any]:
     with SOURCE_IMAGE.open("rb") as handle:
         files = [("files[]", (SOURCE_IMAGE.name, handle, "image/jpeg"))]
         data = {
@@ -126,9 +154,10 @@ def post_generation(provider_run: ProviderRun) -> dict[str, Any]:
             "realistic_mode": "true",
             "watermark_cleanup_enabled": "true",
             "watermark_keywords": WATERMARK_KEYWORDS,
-            "quality_control_enabled": "false",
-            "quality_threshold": "72",
-            "quality_max_retries": "0",
+            "quality_control_enabled": str(bool(args.quality_control)).lower(),
+            "quality_threshold": str(args.quality_threshold),
+            "quality_max_retries": str(args.quality_max_retries),
+            "subject_guard_enabled": "true",
         }
         response = requests.post(API_URL, data=data, files=files, timeout=900)
 
@@ -147,6 +176,17 @@ def decode_data_url(data_url: str) -> bytes:
     return base64.b64decode(encoded)
 
 
+def _copy_result_from_iteration_log(item: dict[str, Any], target_path: Path) -> bool:
+    iteration_log_path = item.get("iterationLogPath") if isinstance(item, dict) else None
+    if not iteration_log_path:
+        return False
+    source_result_path = Path(iteration_log_path).parent / "结果.png"
+    if not source_result_path.exists():
+        return False
+    shutil.copyfile(source_result_path, target_path)
+    return True
+
+
 def write_summary(records: list[dict[str, Any]]) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = OUTPUT_DIR / f"测试总结_{timestamp}.md"
@@ -157,7 +197,7 @@ def write_summary(records: list[dict[str, Any]]) -> Path:
         f"- 固定提示词：{PROMPT}",
         f"- 固定原图：{SOURCE_IMAGE}",
         f"- 总真实调用：{total_calls}",
-        f"- 成功保存结果图：{sum(1 for record in records if record.get('result_path'))}/6",
+        f"- 成功保存结果图：{sum(1 for record in records if record.get('result_path'))}/{len(records)}",
         "",
         "## 明细",
     ]
@@ -167,6 +207,7 @@ def write_summary(records: list[dict[str, Any]]) -> Path:
             f"#{record['sequence']} {record['label']} 第 {record['attempt']} 次："
             f"{record['status']} / {record['item_status']}，"
             f"调用 {record.get('provider_call_count')} 次，"
+            f"质检 {record.get('quality_score')} / {record.get('quality_passed')}，"
             f"原图 {record['source_path']}，"
             f"结果 {record.get('result_path') or '无'}，"
             f"失败记录 {record.get('failure_path') or '无'}"

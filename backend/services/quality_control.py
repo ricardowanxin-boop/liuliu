@@ -6,6 +6,9 @@ from dataclasses import dataclass
 
 from PIL import Image, ImageFilter, ImageOps, ImageStat
 
+from backend.services.hand_anatomy import evaluate_hand_anatomy
+from backend.services.subject_fidelity import evaluate_subject_fidelity
+
 
 DEFAULT_QUALITY_THRESHOLD = 72
 DEFAULT_MAX_RETRIES = 1
@@ -26,6 +29,9 @@ def evaluate_generated_image(
     *,
     threshold: int = DEFAULT_QUALITY_THRESHOLD,
     source_image: Image.Image | None = None,
+    prompt: str | None = None,
+    subject_guard_enabled: bool = True,
+    texture_preservation_enabled: bool = True,
 ) -> QualityAssessment:
     """
     Score a generated image without calling another model.
@@ -49,6 +55,12 @@ def evaluate_generated_image(
     white_ratio = _white_or_near_white_ratio(hsv)
     dark_ratio = _dark_ratio(gray)
     source_comparison = _compare_with_source(source_image, sample) if source_image is not None else None
+    hand_issues = evaluate_hand_anatomy(image, source_image=source_image, prompt=prompt)
+    subject_issues = (
+        evaluate_subject_fidelity(image, source_image=source_image)
+        if subject_guard_enabled and source_image is not None
+        else []
+    )
 
     score = 100
     reasons: list[str] = []
@@ -103,9 +115,13 @@ def evaluate_generated_image(
         edge_delta = source_comparison["edge_delta"]
         background_texture_delta = source_comparison["background_texture_delta"]
         center_detail_delta = source_comparison["center_detail_delta"]
+        background_luma_std_delta = source_comparison["background_luma_std_delta"]
         luma_delta = source_comparison["luma_delta"]
         saturation_delta = source_comparison["saturation_delta"]
 
+        if texture_preservation_enabled and background_texture_delta < -1.4 and background_luma_std_delta < -3.0:
+            score -= 12
+            reasons.append("背景真实纹理疑似被虚化或清理，书页、桌面、布料的自然颗粒低于原图")
         if background_texture_delta < -2.5:
             score -= 14
             reasons.append("相对原图桌面/背景纹理下降，真实微纹理被抹平")
@@ -125,11 +141,42 @@ def evaluate_generated_image(
             score -= 6
             reasons.append("结果尺寸明显小于原图，交付清晰度有损失")
 
+    hard_hand_keywords = (
+        "MediaPipe 未能在结果图中稳定识别",
+        "手部关键点相对结构变化过大",
+        "手掌屏幕拓扑方向疑似翻转",
+        "掌心侧疑似新增异常高亮贴钻",
+        "指甲内侧",
+        "掌心侧",
+        "指腹侧",
+    )
+    has_hand_blocker = False
+    for issue in hand_issues:
+        score -= issue.penalty
+        reasons.append(issue.reason)
+        if any(keyword in issue.reason for keyword in hard_hand_keywords):
+            has_hand_blocker = True
+
+    if has_hand_blocker:
+        score = min(score, threshold - 1)
+        reasons.append("P0 硬失败：手部结构或美甲方向存在人体逻辑风险，不允许作为可交付结果")
+
+    has_subject_blocker = False
+    for issue in subject_issues:
+        score -= issue.penalty
+        reasons.append(issue.reason)
+        if issue.blocker:
+            has_subject_blocker = True
+
+    if has_subject_blocker:
+        score = min(score, threshold - 1)
+        reasons.append("P0 硬失败：商品主体结构、颜色或关键细节相对原图漂移，不允许作为可交付结果")
+
     if not reasons:
         reasons.append("通过本地质检：亮度、细节、色彩和背景自然度达标")
 
     normalized_score = max(0, min(100, round(score)))
-    passed = normalized_score >= threshold
+    passed = normalized_score >= threshold and not has_hand_blocker and not has_subject_blocker
     return QualityAssessment(
         score=normalized_score,
         passed=passed,
@@ -140,14 +187,47 @@ def evaluate_generated_image(
 
 def build_quality_retry_prompt(base_prompt: str, assessment: QualityAssessment) -> str:
     """Append focused repair instructions for one retry attempt."""
+    concise_reasons = _summarize_retry_reasons(assessment.reasons)
+    if has_hard_quality_blocker(assessment):
+        repair_instruction = (
+            "这是保守修复，不是重新创作：回到原图构图、手势、商品位置和真实光源。"
+            "只做轻微背景整理、去水印和真实照片级调色；不要重画手、商品、透明托盘、链条、吊坠或指甲。"
+            "如果美甲外侧甲面不可见，保留自然透明甲边缘即可，不要为了展示贴钻改变手部结构。"
+        )
+    else:
+        repair_instruction = assessment.retry_instruction
+
     return "\n\n".join(
         [
             base_prompt.strip(),
-            "自动质检未通过，请基于同一张原图重新生成，并重点修正以下问题：",
-            "\n".join(f"- {reason}" for reason in assessment.reasons),
-            assessment.retry_instruction,
+            "上一张结果存在质量风险。请基于同一张原图做保守修复，禁止大幅重绘：",
+            "\n".join(f"- {reason}" for reason in concise_reasons),
+            repair_instruction,
         ]
     ).strip()
+
+
+def has_hard_quality_blocker(assessment: QualityAssessment) -> bool:
+    """Return true for P0 risks where automatic retry tends to make structure worse."""
+    hard_keywords = (
+        "P0 硬失败",
+        "手部结构",
+        "美甲方向",
+        "手掌屏幕拓扑方向疑似翻转",
+        "指甲内侧",
+        "掌心侧疑似新增异常高亮贴钻",
+        "商品/手部主体结构相对原图变化过大",
+        "商品主体结构、颜色或关键细节相对原图漂移",
+    )
+    return any(any(keyword in reason for keyword in hard_keywords) for reason in assessment.reasons)
+
+
+def _summarize_retry_reasons(reasons: list[str], limit: int = 3) -> list[str]:
+    """Keep retry prompts focused; long error dumps have been making models over-redraw."""
+    clean = [reason for reason in reasons if reason and not reason.startswith("P0 硬失败")]
+    if not clean:
+        return ["保留原图结构，降低重绘幅度，优先修复真实感和商品细节。"]
+    return clean[:limit]
 
 
 def _prepare_sample(image: Image.Image) -> Image.Image:
@@ -217,8 +297,8 @@ def _compare_with_source(source_image: Image.Image, result_sample: Image.Image) 
     source_hsv = source_sample.convert("HSV")
     result_hsv = result_sample.convert("HSV")
 
-    source_background_edge, _source_background_luma_std = _background_texture_metrics(source_gray)
-    result_background_edge, _result_background_luma_std = _background_texture_metrics(result_gray)
+    source_background_edge, source_background_luma_std = _background_texture_metrics(source_gray)
+    result_background_edge, result_background_luma_std = _background_texture_metrics(result_gray)
 
     return {
         "luma_delta": float(ImageStat.Stat(result_gray).mean[0] - ImageStat.Stat(source_gray).mean[0]),
@@ -228,11 +308,23 @@ def _compare_with_source(source_image: Image.Image, result_sample: Image.Image) 
             - ImageStat.Stat(source_gray.filter(ImageFilter.FIND_EDGES)).mean[0]
         ),
         "background_texture_delta": float(result_background_edge - source_background_edge),
+        "background_luma_std_delta": float(result_background_luma_std - source_background_luma_std),
         "center_detail_delta": float(_center_detail_score(result_gray) - _center_detail_score(source_gray)),
     }
 
 
 def _build_retry_instruction(reasons: list[str]) -> str:
+    if any("商品/手部主体结构" in reason or "商品主体颜色" in reason or "商品主体高频细节" in reason for reason in reasons):
+        return (
+            "把原图商品主体作为硬约束：保持商品形状、颜色、链条走向、吊坠轮廓、金属镶边和宝石/珍珠细节。"
+            "背景和风格可以优化，但不要整体重绘商品区域；商品清晰度和结构相似度必须不低于原图。"
+        )
+    if any("MediaPipe" in reason or "手部关键点" in reason or "贴钻" in reason or "指甲内侧" in reason for reason in reasons):
+        return (
+            "把原图手部结构作为硬约束：保留手心朝向、手指张开角度、指尖方向和商品位置，遵循 MediaPipe 手部关键点拓扑。"
+            "贴钻只能在指甲盖外表面；掌心侧、指腹侧、甲下或指甲内侧禁止出现钻饰。"
+            "同时锁定商品主体，链条、吊坠、金属镶边和宝石轮廓必须比背景更清晰。"
+        )
     if any("纹理过度平滑" in reason or "柔化" in reason or "微纹理" in reason for reason in reasons):
         return "降低重绘强度：保留桌面纹理、自然噪点、皮肤纹理、甲面反光和局部瑕疵，禁止全局降噪和背景涂抹。"
     if any("商品主体" in reason or "珠子" in reason or "金属" in reason or "珍珠" in reason for reason in reasons):
